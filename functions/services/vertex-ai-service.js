@@ -1,11 +1,12 @@
 const http = require("http");
 const firebaseRemoteConfig = require("./firebase-remote-config");
 
-async function createPrompt(address, features) {
+async function createPrompt(address, features, contactDetails) {
   let prompt = await firebaseRemoteConfig.getParameter('prompt');
 
   prompt = prompt.replace('${address}', address);
   prompt = prompt.replace('${features}', features);
+  prompt = prompt.replace('${contactDetails}', contactDetails);
 
   const response = sendPromptToGemini(prompt);
   return response;

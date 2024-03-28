@@ -111,9 +111,11 @@ exports.generateCopy = functions.https.onCall(
       console.log('generateCopy data');
       console.log(request);
 
-      const address = request.data.address;
-      const features = request.data.features;
-      const response = await vertexAiService.createPrompt(address, features);
+      const address = request.data['address'];
+      const features = request.data['features'];
+      const contactDetails = request.data['contact_details'];
+
+      const response = await vertexAiService.createPrompt(address, features, contactDetails);
 
       console.log(response);
 
