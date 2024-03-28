@@ -105,17 +105,17 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
 });
 
 
-exports.generateCopy = functions.https.onCall(
+exports.generateAllCopy = functions.https.onCall(
   async (request, context) => {
     try {
-      console.log('generateCopy data');
+      console.log('generateAllCopy data');
       console.log(request);
 
       const address = request.data['address'];
       const features = request.data['features'];
       const contactDetails = request.data['contact_details'];
 
-      const response = await vertexAiService.createPrompt(address, features, contactDetails);
+      const response = await vertexAiService.createPromptForAllCopy(address, features, contactDetails);
 
       console.log(response);
 

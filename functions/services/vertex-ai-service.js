@@ -1,7 +1,7 @@
 const http = require("http");
 const firebaseRemoteConfig = require("./firebase-remote-config");
 
-async function createPrompt(address, features, contactDetails) {
+async function createPromptForAllCopy(address, features, contactDetails) {
   let prompt = await firebaseRemoteConfig.getParameter('prompt');
 
   prompt = prompt.replace('${address}', address);
@@ -50,8 +50,6 @@ async function sendPromptToGemini(prompt) {
 
     return responseJSON.candidates[0].content.parts[0].text;
 
-    // return extractJSON(responseJSON.candidates[0].content.parts[0].text);
-
   } catch (error) {
     console.error(error);
   }
@@ -83,5 +81,5 @@ function extractJSON(text) {
 }
 
 module.exports = {
-  createPrompt,
+  createPromptForAllCopy: createPromptForAllCopy,
 };
