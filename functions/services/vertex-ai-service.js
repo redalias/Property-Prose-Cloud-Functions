@@ -2,8 +2,20 @@ const http = require("http");
 const firebaseRemoteConfig = require("./firebase-remote-config");
 
 async function createPromptForAllCopy(address, features, contactDetails) {
-  let prompt = await firebaseRemoteConfig.getParameter('prompt');
+  let prompt = await firebaseRemoteConfig.getParameter('prompt_all_copy');
 
+  prompt = prompt.replace('${address}', address);
+  prompt = prompt.replace('${features}', features);
+  prompt = prompt.replace('${contactDetails}', contactDetails);
+
+  const response = sendPromptToGemini(prompt);
+  return response;
+}
+
+async function createPromptForSingleCopy(copyElementType, address, features, contactDetails) {
+  let prompt = await firebaseRemoteConfig.getParameter('prompt_single_copy');
+
+  prompt = prompt.replace('${copyElementType}', copyElementType);
   prompt = prompt.replace('${address}', address);
   prompt = prompt.replace('${features}', features);
   prompt = prompt.replace('${contactDetails}', contactDetails);
@@ -82,4 +94,5 @@ function extractJSON(text) {
 
 module.exports = {
   createPromptForAllCopy: createPromptForAllCopy,
+  createPromptForSingleCopy: createPromptForSingleCopy,
 };

@@ -122,7 +122,30 @@ exports.generateAllCopy = functions.https.onCall(
       return response;
     } catch (error) {
       console.error(error);
-      return "Error creating copy";
+      return "Error creating all copy";
+    }
+  },
+);
+
+exports.generateSingleCopy = functions.https.onCall(
+  async (request, context) => {
+    try {
+      console.log('generateSingleCopy data');
+      console.log(request);
+
+      const copyElementType = request.data['copy_element_type'];
+      const address = request.data['address'];
+      const features = request.data['features'];
+      const contactDetails = request.data['contact_details'];
+
+      const response = await vertexAiService.createPromptForSingleCopy(copyElementType, address, features, contactDetails);
+
+      console.log(response);
+
+      return response;
+    } catch (error) {
+      console.error(error);
+      return "Error creating single copy";
     }
   },
 );
