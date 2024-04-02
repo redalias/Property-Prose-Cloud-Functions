@@ -12,13 +12,21 @@ async function createPromptForAllCopy(address, features, contactDetails) {
   return response;
 }
 
-async function createPromptForSingleCopy(copyElementType, address, features, contactDetails) {
+async function createPromptForSingleCopy(copyElementType, address, features, contactDetails, maxLength) {
   let prompt = await firebaseRemoteConfig.getParameter('prompt_single_copy');
 
   prompt = prompt.replace('${copyElementType}', copyElementType);
   prompt = prompt.replace('${address}', address);
   prompt = prompt.replace('${features}', features);
   prompt = prompt.replace('${contactDetails}', contactDetails);
+
+  if (maxLength == null || maxLength == 0) {
+    // Remove the character length requirement in the prompt.
+    prompt = prompt.replace(', and a maximum of ${maxLength} characters long', '');
+  } else {
+    // Update the character length requirement in the prompt.
+    prompt = prompt.replace('${maxLength}', maxLength);
+  }
 
   const response = sendPromptToGemini(prompt);
   return response;

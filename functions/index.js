@@ -137,8 +137,9 @@ exports.generateSingleCopy = functions.https.onCall(
       const address = request.data['address'];
       const features = request.data['features'];
       const contactDetails = request.data['contact_details'];
+      const maxLength = request.data['max_length'];
 
-      const response = await vertexAiService.createPromptForSingleCopy(copyElementType, address, features, contactDetails);
+      const response = await vertexAiService.createPromptForSingleCopy(copyElementType, address, features, contactDetails, maxLength);
 
       console.log(response);
 
