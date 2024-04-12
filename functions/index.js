@@ -152,7 +152,11 @@ exports.generateAllCopy = functions.https.onCall(
       const features = request.data['features'];
       const contactDetails = request.data['contact_details'];
 
-      const response = await vertexAiService.createPromptForAllCopy(address, features, contactDetails);
+      const response = await vertexAiService.createPromptForAllCopy(
+        address,
+        features,
+        contactDetails,
+      );
 
       console.log(response);
 
@@ -160,6 +164,42 @@ exports.generateAllCopy = functions.https.onCall(
     } catch (error) {
       console.error(error);
       return "Error creating all copy";
+    }
+  },
+);
+
+exports.generateContextualCopy = functions.https.onCall(
+  async (request, context) => {
+    try {
+      console.log('generateContextualCopy data');
+      console.log(request);
+
+      const copyElementType = request.data['copy_element_type'];
+      const action = request.data['action'];
+      const existingCopy = request.data['existing_copy'];
+      const existingCopyToReplace = request.data['existing_copy_to_replace'];
+      const address = request.data['address'];
+      const features = request.data['features'];
+      const contactDetails = request.data['contact_details'];
+      const maxLength = request.data['max_length'];
+
+      const response = await vertexAiService.createPromptForContextualCopy(
+        copyElementType,
+        action,
+        existingCopy,
+        existingCopyToReplace,
+        address,
+        features,
+        contactDetails,
+        maxLength
+      );
+
+      console.log(response);
+
+      return response;
+    } catch (error) {
+      console.error(error);
+      return "Error creating single copy";
     }
   },
 );
@@ -176,7 +216,13 @@ exports.generateSingleCopy = functions.https.onCall(
       const contactDetails = request.data['contact_details'];
       const maxLength = request.data['max_length'];
 
-      const response = await vertexAiService.createPromptForSingleCopy(copyElementType, address, features, contactDetails, maxLength);
+      const response = await vertexAiService.createPromptForSingleCopy(
+        copyElementType,
+        address,
+        features,
+        contactDetails,
+        maxLength,
+      );
 
       console.log(response);
 

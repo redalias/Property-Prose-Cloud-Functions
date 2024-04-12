@@ -12,6 +12,38 @@ async function createPromptForAllCopy(address, features, contactDetails) {
   return response;
 }
 
+async function createPromptForContextualCopy(
+  copyElementType,
+  action,
+  existingCopy,
+  existingCopyToReplace,
+  address,
+  features,
+  contactDetails,
+  maxLength
+) {
+  let prompt = await firebaseRemoteConfig.getParameter('prompt_contextual_copy');
+
+  prompt = prompt.replace('${copyElementType}', copyElementType);
+  prompt = prompt.replace('${action}', action);
+  prompt = prompt.replace('${existingCopy}', existingCopy);
+  prompt = prompt.replace('${existingCopyToReplace}', existingCopyToReplace);
+  prompt = prompt.replace('${address}', address);
+  prompt = prompt.replace('${features}', features);
+  prompt = prompt.replace('${contactDetails}', contactDetails);
+
+  if (maxLength == null || maxLength == 0) {
+    // Remove the character length requirement in the prompt.
+    prompt = prompt.replace('Make it a maximum of ${maxLength} characters long.', '');
+  } else {
+    // Update the character length requirement in the prompt.
+    prompt = prompt.replace('${maxLength}', maxLength);
+  }
+
+  const response = sendPromptToGemini(prompt);
+  return response;
+}
+
 async function createPromptForSingleCopy(copyElementType, address, features, contactDetails, maxLength) {
   let prompt = await firebaseRemoteConfig.getParameter('prompt_single_copy');
 
@@ -22,7 +54,7 @@ async function createPromptForSingleCopy(copyElementType, address, features, con
 
   if (maxLength == null || maxLength == 0) {
     // Remove the character length requirement in the prompt.
-    prompt = prompt.replace(', and a maximum of ${maxLength} characters long', '');
+    prompt = prompt.replace('Make it a maximum of ${maxLength} characters long.', '');
   } else {
     // Update the character length requirement in the prompt.
     prompt = prompt.replace('${maxLength}', maxLength);
@@ -102,5 +134,6 @@ function extractJSON(text) {
 
 module.exports = {
   createPromptForAllCopy: createPromptForAllCopy,
+  createPromptForContextualCopy: createPromptForContextualCopy,
   createPromptForSingleCopy: createPromptForSingleCopy,
 };
