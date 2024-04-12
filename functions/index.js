@@ -3,6 +3,7 @@ const admin = require("firebase-admin");
 admin.initializeApp();
 
 // const config = require("./values/config");
+const firebaseRemoteConfig = require("./services/firebase-remote-config");
 const firestoreService = require("./services/firestore-service");
 const functions = require("firebase-functions/v2");
 const stripeStrings = require("./values/stripe-strings");
@@ -103,6 +104,42 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
       .send("Error handling webhook");
   }
 });
+
+exports.isUserAbleToGenerateCopy = functions.https.onCall(
+  async (request, context) => {
+    try {
+      console.log('isUserAbleToGenerateCopy');
+      console.log(request);
+
+      // Fetch user data from Firestore.
+      let user = firestoreService.user(request.data['address']);
+      let isPaid = user['is_paid'];
+
+      if (isPaid) {
+        // If the user is a paying user, then they can generate copy.
+        return true;
+      } else {
+        // If the user is not a paying user, then check if they
+        let maximumFreeCopyGenerations = await firebaseRemoteConfig.getParameter('maximum_free_copy_generations');
+        let lifetimeCopyGenerations = user['lifetime_copy_generations'];
+        let remainingCopyGenerations = maximumFreeCopyGenerations - lifetimeCopyGenerations;
+
+        if (remainingCopyGenerations > 1) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+
+      console.log(response);
+
+      return response;
+    } catch (error) {
+      console.error(error);
+      return "Error checking if user is able to generate copy";
+    }
+  },
+);
 
 
 exports.generateAllCopy = functions.https.onCall(

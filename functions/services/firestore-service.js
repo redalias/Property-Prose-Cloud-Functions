@@ -16,16 +16,38 @@ async function updateUser(userId, updatedData) {
     const db = admin.firestore();
 
     await db
-        .collection(firestoreCollections.users)
-        .doc(userId)
-        .update(updatedData);
+      .collection(firestoreCollections.users)
+      .doc(userId)
+      .update(updatedData);
 
     console.log(
-        "User " + userId + " updated successfully",
+      "User " + userId + " updated successfully",
     );
   } catch (error) {
     console.error(
-        "Error updating user " + userId,
+      "Error updating user " + userId,
+    );
+
+    console.error(error);
+  }
+}
+
+async function user(userId) {
+  try {
+    const db = admin.firestore();
+
+    let user = await db
+      .collection(firestoreCollections.users)
+      .doc(userId);
+
+    console.log(
+      "User " + userId + " updated successfully",
+    );
+
+    return user;
+  } catch (error) {
+    console.error(
+      "Error fetching user " + userId,
     );
 
     console.error(error);
@@ -35,4 +57,5 @@ async function updateUser(userId, updatedData) {
 module.exports = {
   addPayment,
   updateUser,
+  user,
 };
