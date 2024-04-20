@@ -88,6 +88,7 @@ async function sendPromptToGemini(prompt) {
     });
 
     let responseText = await response.text();
+    responseText = extractJSONString(responseText);
 
     const responseJSON = JSON.parse(responseText);
 
@@ -108,27 +109,30 @@ async function sendPromptToGemini(prompt) {
 }
 
 
-function extractJSON(text) {
+function extractJSONString(text) {
   try {
-    // Attempt to parse the entire string directly as JSON first
-    return JSON.parse(text);
-  } catch (error) {
-    // If parsing fails, attempt to extract the JSON object from within the string
+    // Remove backticks.
+    text = text.replaceAll('`', '');
+
+    // Remove the word 'json'.
+    text = text.replaceAll('json', '');
+    text = text.replaceAll('JSON', '');
+
+    // Trim any leading or trailing whitespace.
+    text = text.trim();
+
     const startIndex = text.indexOf("{");
     const endIndex = text.lastIndexOf("}");
 
     if (startIndex !== -1 && endIndex !== -1) {
-      const potentialJSON = text.substring(startIndex, endIndex + 1);
-      try {
-        return JSON.parse(potentialJSON);
-      } catch (error) {
-        // If extraction also fails, return null
-        return null;
-      }
-    } else {
-      // If no JSON object is found, return null
-      return null;
+      const jsonString = text.substring(startIndex, endIndex + 1);
+      return jsonString;
     }
+
+    // This should never be reached.
+    return null;
+  } catch (error) {
+    return null;
   }
 }
 
