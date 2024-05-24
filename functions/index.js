@@ -20,7 +20,7 @@ exports.createStripePaymentLink = functions.https.onCall(
         allow_promotion_codes: true,
         after_completion: {
           hosted_confirmation: {
-            custom_message: stripeStrings.paymentSuccessful,
+            custom_message: stripeConfig.paymentSuccessfulText,
           },
           type: "hosted_confirmation",
         },

@@ -10,7 +10,7 @@ const stripeStrings = {
   testModePriceId: "stripe_test_mode_price_id",
   liveModePriceId: "stripe_live_mode_price_id",
 
-  paymentSuccessful: "Payment complete! You may now close this tab and return to propertyprose.io.",
+  paymentSuccessfulText: "stripe_payment_successful_text",
 };
 
 module.exports = stripeStrings;

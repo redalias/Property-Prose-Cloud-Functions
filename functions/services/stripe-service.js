@@ -1,6 +1,7 @@
 const config = require("../values/config");
 const firebaseRemoteConfig = require("./firebase-remote-config");
 const stripeConfig = require("../values/stripe-strings");
+const stripeStrings = require("../values/stripe-strings");
 
 // Fetch Stripe keys from Firebase Remote Config.
 const createStripeConfig = async () => {
@@ -17,6 +18,7 @@ const createStripeConfig = async () => {
       stripeConfig.testModePriceId :
       stripeConfig.liveModePriceId;
 
+    const paymentSuccessfulText = stripeStrings.paymentSuccessfulText;
     return {
       secretKey: await firebaseRemoteConfig.getParameterFromGroup(
           stripeConfig.remoteConfigParameterName,
@@ -29,6 +31,10 @@ const createStripeConfig = async () => {
       priceId: await firebaseRemoteConfig.getParameterFromGroup(
           stripeConfig.remoteConfigParameterName,
           priceId,
+      ),
+      paymentSuccessfulText: await firebaseRemoteConfig.getParameterFromGroup(
+        stripeConfig.remoteConfigParameterName,
+        paymentSuccessfulText,
       ),
     };
   } catch (error) {

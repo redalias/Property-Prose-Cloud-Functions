@@ -38,6 +38,7 @@ async function getParameterFromGroup(
 ) {
   console.log("Finding parameter key '" + parameterKey + "' in group '" + parameterGroup + "'");
   const template = await getTemplate();
+
   return template.parameterGroups[parameterGroup].parameters[
       parameterKey
   ].defaultValue.value;
