@@ -6,6 +6,10 @@ const stripeStrings = require("../values/stripe-strings");
 // Fetch Stripe keys from Firebase Remote Config.
 const createStripeConfig = async () => {
   try {
+    const customerPortalUrl = config.isTestMode ?
+      stripeConfig.customerPortalTestModeUrl :
+      stripeConfig.customerPortalLiveModeUrl;
+
     const secretKey = config.isTestMode ?
       stripeConfig.secretTestModeKey :
       stripeConfig.secretLiveModeKey;
@@ -19,18 +23,23 @@ const createStripeConfig = async () => {
       stripeConfig.liveModePriceId;
 
     const paymentSuccessfulText = stripeStrings.paymentSuccessfulText;
+
     return {
-      secretKey: await firebaseRemoteConfig.getParameterFromGroup(
-          stripeConfig.remoteConfigParameterName,
-          secretKey,
+      customerPortalUrl: await firebaseRemoteConfig.getParameterFromGroup(
+        stripeConfig.remoteConfigParameterName,
+        customerPortalUrl,
       ),
-      webhookSigningSecret: await firebaseRemoteConfig.getParameterFromGroup(
-          stripeConfig.remoteConfigParameterName,
-          webhookSecret,
+      secretKey: await firebaseRemoteConfig.getParameterFromGroup(
+        stripeConfig.remoteConfigParameterName,
+        secretKey,
+      ),
+      webhookSecret: await firebaseRemoteConfig.getParameterFromGroup(
+        stripeConfig.remoteConfigParameterName,
+        webhookSecret,
       ),
       priceId: await firebaseRemoteConfig.getParameterFromGroup(
-          stripeConfig.remoteConfigParameterName,
-          priceId,
+        stripeConfig.remoteConfigParameterName,
+        priceId,
       ),
       paymentSuccessfulText: await firebaseRemoteConfig.getParameterFromGroup(
         stripeConfig.remoteConfigParameterName,
@@ -39,8 +48,8 @@ const createStripeConfig = async () => {
     };
   } catch (error) {
     console.error(
-        "Error fetching Stripe configuration from Remote Config:",
-        error,
+      "Error fetching Stripe configuration from Remote Config:",
+      error,
     );
     throw new Error("Failed to retrieve Stripe configuration");
   }

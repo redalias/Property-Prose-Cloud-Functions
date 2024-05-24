@@ -49,13 +49,15 @@ exports.createStripePaymentLink = functions.https.onCall(
 // Called when a customer processes a payment.
 exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
   try {
+    console.log('Called Stripe webhook');
+
     const stripeConfig = await stripeService.createStripeConfig();
     const stripe = require("stripe")(stripeConfig.secretKey);
 
     const event = stripe.webhooks.constructEvent(
       req.rawBody,
       req.headers["stripe-signature"],
-      stripeConfig.webhookSigningSecret,
+      stripeConfig.webhookSecret,
     );
 
     const session = event.data.object;
@@ -85,9 +87,15 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
       });
 
       await firestoreService.updateUser(
-        session.metadata.place_card_collection_id,
+        session.metadata.firebase_user_id,
         {
-          is_paid: true,
+          membership: {
+            date_latest_payment: admin.firestore.Timestamp.now(),
+            date_latest_payment_id: session.id,
+            plan: "Pro",
+            stripe_customer_id: session.customer,
+            latest_subscription_id: session.subscription,
+          }
         },
       );
 

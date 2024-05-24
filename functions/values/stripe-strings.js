@@ -1,6 +1,9 @@
 const stripeStrings = {
   remoteConfigParameterName: "Stripe",
 
+  customerPortalTestModeUrl: "stripe_test_mode_customer_portal_url",
+  customerPortalLiveModeUrl: "stripe_live_mode_customer_portal_url",
+
   secretTestModeKey: "stripe_test_mode_secret_key",
   secretLiveModeKey: "stripe_live_mode_secret_key",
 

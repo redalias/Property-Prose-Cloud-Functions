@@ -33,14 +33,14 @@ async function getParameter(parameterKey) {
  * @returns {dynamic} The value of the found parameter.
 */
 async function getParameterFromGroup(
-    parameterGroup,
-    parameterKey,
+  parameterGroup,
+  parameterKey,
 ) {
   console.log("Finding parameter key '" + parameterKey + "' in group '" + parameterGroup + "'");
   const template = await getTemplate();
 
   return template.parameterGroups[parameterGroup].parameters[
-      parameterKey
+    parameterKey
   ].defaultValue.value;
 }
 
