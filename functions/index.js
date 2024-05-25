@@ -27,7 +27,7 @@ exports.createStripeCustomerPortalSession = functions.https.onCall(
       console.log("Created Stripe customer portal session");
       console.log(portalSession);
 
-      return JSON.parse(portalSession);
+      return portalSession;
     } catch (error) {
       console.error(error);
       return "Error creating Stripe customer portal session";
