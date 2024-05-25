@@ -10,6 +10,31 @@ const stripeStrings = require("./values/stripe-strings");
 const stripeService = require("./services/stripe-service");
 const vertexAiService = require("./services/vertex-ai-service");
 
+/*
+  Creates a session of the Stripe Customer Portal.
+  See https://docs.stripe.com/api/customer_portal/sessions/create.
+*/
+exports.createStripeCustomerPortalSession = functions.https.onCall(
+  async (request, context) => {
+    try {
+      const stripeConfig = await stripeService.createStripeConfig();
+      const stripe = require("stripe")(stripeConfig.secretKey);
+
+      const portalSession = await stripe.billingPortal.sessions.create({
+        customer: request.data.stripe_customer_id,
+      });
+
+      console.log("Created Stripe customer portal session");
+      console.log(portalSession);
+
+      return JSON.parse(portalSession);
+    } catch (error) {
+      console.error(error);
+      return "Error creating Stripe customer portal session";
+    }
+  },
+);
+
 exports.createStripePaymentLink = functions.https.onCall(
   async (request, context) => {
     try {
@@ -61,6 +86,8 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
     );
 
     const session = event.data.object;
+    console.log("Session:");
+    console.log(session);
 
     if (event.type === "checkout.session.completed") {
       // Save payment details to Firestore.
@@ -91,7 +118,7 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
         {
           membership: {
             date_latest_payment: admin.firestore.Timestamp.now(),
-            date_latest_payment_id: session.id,
+            latest_payment_id: session.id,
             plan: "Pro",
             stripe_customer_id: session.customer,
             latest_subscription_id: session.subscription,
