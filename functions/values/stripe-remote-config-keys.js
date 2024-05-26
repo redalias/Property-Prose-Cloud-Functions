@@ -1,4 +1,4 @@
-const stripeStrings = {
+const stripeRemoteConfigStrings = {
   remoteConfigParameterName: "Stripe",
 
   customerPortalTestModeUrl: "stripe_test_mode_customer_portal_url",
@@ -16,4 +16,4 @@ const stripeStrings = {
   paymentSuccessfulText: "stripe_payment_successful_text",
 };
 
-module.exports = stripeStrings;
+module.exports = stripeRemoteConfigStrings;
