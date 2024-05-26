@@ -18,21 +18,27 @@ PROD_PROJECT_NAME="property-prose"
 #    Deploy to production:
 #    ./release.sh prod
 #
+#    Deploy specific functions to development:
+#    ./release.sh dev function1 function2
+#
+#    Deploy specific functions to production:
+#    ./release.sh prod function1 function2
+#
 # 4. The script will build the Flutter web app and upload to Firebase Cloud Functions.
 
-# Check if an argument is provided
-if [ "$#" -ne 1 ]; then
-    echo "Please run either './release.sh dev' or './release.sh prod'."
+# Check if at least one argument is provided
+if [ "$#" -lt 1 ]; then
+    echo "Please run either './release.sh dev' or './release.sh prod' optionally followed by function names."
     exit 1
 fi
 
-# Choose Firebase project based on argument
+# Choose Firebase project based on the first argument
 if [ "$1" = "dev" ]; then
     PROJECT_NAME=$DEV_PROJECT_NAME
 elif [ "$1" = "prod" ]; then
     PROJECT_NAME=$PROD_PROJECT_NAME
 
-     # Prompt for confirmation before deploying to production
+    # Prompt for confirmation before deploying to production
     echo "You are about to deploy to PRODUCTION. Are you sure? (y/n)"
     read -r confirmation
     if [ "$confirmation" != "y" ] && [ "$confirmation" != "Y" ]; then
@@ -66,7 +72,16 @@ echo "Firebase project configured successfully."
 # Build your Flutter web project
 echo "Building project..."
 START_TIME=$SECONDS
-firebase deploy --only functions
+
+# Check if specific functions are provided
+if [ "$#" -gt 1 ]; then
+    FUNCTIONS=$(printf ",%s" "${@:2}")
+    FUNCTIONS=${FUNCTIONS:1} # Remove the leading comma
+    firebase deploy --only functions:$FUNCTIONS
+else
+    firebase deploy --only functions
+fi
+
 calculate_duration $START_TIME
 echo "Firebase Cloud Functions uploaded successfully."
 
