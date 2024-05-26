@@ -55,11 +55,11 @@ exports.createStripePaymentLink = functions.https.onCall(
 /* 
   Called when certain Stripe events are triggered.
 */
-exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
+exports.stripeWebhook = functions.https.onRequest(async (request, res) => {
   try {
     console.log('Called Stripe webhook');
 
-    await stripeService.webhook(req);
+    await stripeService.webhook(request);
 
   } catch (error) {
     console.error(error);

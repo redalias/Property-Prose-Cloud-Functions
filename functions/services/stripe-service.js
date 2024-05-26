@@ -1,6 +1,8 @@
+const firebaseAdmin = require("firebase-admin");
 const config = require("../values/config");
 const firebaseRemoteConfig = require("./firebase-remote-config");
 const firestoreService = require("./firestore-service");
+const stripeEvents = require("../values/stripe-events");
 const stripeRemoteConfigKeys = require("../values/stripe-remote-config-keys");
 
 // Fetch Stripe keys from Firebase Remote Config.
@@ -93,6 +95,8 @@ async function createPaymentLink(request) {
 }
 
 async function upgradeCustomerPlan(data) {
+  console.log("Upgrading customer plan");
+
   // Save payment details to Firestore.
   await firestoreService.addPayment({
     id: data.id,
@@ -102,7 +106,7 @@ async function upgradeCustomerPlan(data) {
     customer_id: data.customer,
     customer_details: data.customer_details,
     date_created_stripe: data.created,
-    date_created_firestore: admin.firestore.Timestamp.now(),
+    date_created_firestore: firebaseAdmin.firestore.Timestamp.now(),
     date_expired_stripe: data.expires_at,
     invoice_id: data.invoice,
     metadata: data.metadata,
@@ -121,7 +125,7 @@ async function upgradeCustomerPlan(data) {
     data.metadata.firebase_user_id,
     {
       membership: {
-        date_latest_payment: admin.firestore.Timestamp.now(),
+        date_latest_payment: firebaseAdmin.firestore.Timestamp.now(),
         latest_payment_id: data.id,
         plan: "Pro",
         stripe_customer_id: data.customer,
@@ -132,6 +136,8 @@ async function upgradeCustomerPlan(data) {
 }
 
 async function updateCustomerSubscription(data) {
+  console.log("Updating customer subscription");
+
   if (data.cancel_at_period_end === true) {
     // The customer has set to cancel their subscription at the end of
     // their current billing period. Update the user's membership in
@@ -140,7 +146,7 @@ async function updateCustomerSubscription(data) {
       data.metadata.firebase_user_id,
       {
         membership: {
-          plan: "Pro (pending downgrade)",
+          plan: "Pro (pending cancellation)",
         }
       },
     );
@@ -148,6 +154,8 @@ async function updateCustomerSubscription(data) {
 }
 
 async function updateCustomer(request) {
+  console.log("Upgrading customer details");
+
   // Initialise Stripe.
   const stripeConfig = await createRemoteConfigStrings();
   const stripe = require("stripe")(stripeConfig.secretKey);
@@ -163,6 +171,10 @@ async function updateCustomer(request) {
 }
 
 async function webhook(request) {
+  // Initialise Stripe.
+  const stripeConfig = await createRemoteConfigStrings();
+  const stripe = require("stripe")(stripeConfig.secretKey);
+
   const event = stripe.webhooks.constructEvent(
     request.rawBody,
     request.headers["stripe-signature"],
@@ -171,7 +183,7 @@ async function webhook(request) {
 
   console.log("Event type: " + event.type);
 
-  const data = request.data.object;
+  const data = event.data.object;
   console.log("Data:");
   console.log(data);
 
@@ -183,25 +195,21 @@ async function webhook(request) {
     switch (event.type) {
       case stripeEvents.checkoutSessionCompleted:
         // The customer upgraded from Free to Pro.
-        await stripeService.upgradeCustomerPlan(data);
+        await upgradeCustomerPlan(data);
         break;
 
       case stripeEvents.customerSubscriptionUpdated:
         // The customer updated their subscription.
-        await stripeService.updateCustomerSubscription(data);
+        await updateCustomerSubscription(data);
         break;
 
       case stripeEvents.customerSubscriptionDeleted:
         // The customer's pending subscription downgrade has taken effect.
-        await stripeService.downgradeCustomerPlan(data);
+        await downgradeCustomerPlan(data);
         break;
     }
-
-    res
-      .status(200)
-      .send("Webhook handled successfully for event " + data.id);
   } else {
-    res.status(200).send(`Unhandled event type: ${event.type}`);
+    throw new Error(`Unhandled event type: ${event.type}`);
   }
 }
 
