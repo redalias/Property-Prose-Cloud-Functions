@@ -72,7 +72,13 @@ exports.stripeWebhook = functions.https.onRequest(async (request, res) => {
 exports.updateStripeCustomer = functions.https.onCall(
   async (request, context) => {
     try {
-      await stripeService.updateCustomer(request);
+      await stripeService.updateCustomer(
+        request.data.stripe_customer_id,
+        {
+          email: request.data.email,
+          name: request.data.name,
+        }
+      );
 
       console.log("Updated Stripe customer");
       console.log(portalSession);

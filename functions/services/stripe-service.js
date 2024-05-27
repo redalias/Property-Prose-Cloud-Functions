@@ -133,6 +133,17 @@ async function upgradeCustomerPlan(data) {
       }
     },
   );
+
+  // Add the user's Firebase ID as metadata in their Stripe customer
+  // profile.
+  await updateCustomer(
+    data.customer,
+    {
+      metadata: {
+        firebase_user_id: data.client_reference_id,
+      }
+    }
+  );
 }
 
 async function updateCustomerSubscription(data) {
@@ -142,19 +153,34 @@ async function updateCustomerSubscription(data) {
     // The customer has set to cancel their subscription at the end of
     // their current billing period. Update the user's membership in
     // Firestore.
+
+    console.log("Cancelling customer subscription at end of billing period");
+
+    // Fetch the customer from Stripe and get their Firebase user ID.
+    const customer = await getCustomer(data.customer);
+
+    // Update the user's membership status in Firebase.
     await firestoreService.updateUser(
-      data.metadata.firebase_user_id,
+      customer.metadata.firebase_user_id,
       {
-        membership: {
-          plan: "Pro (pending cancellation)",
-        }
+        "membership.plan": "Pro (pending downgrade)",
       },
     );
   }
 }
 
-async function updateCustomer(request) {
-  console.log("Upgrading customer details");
+async function getCustomer(customerId) {
+  console.log("Getting customer " + customerId + " from Stripe");
+
+  // Initialise Stripe.
+  const stripeConfig = await createRemoteConfigStrings();
+  const stripe = require("stripe")(stripeConfig.secretKey);
+
+  return await stripe.customers.retrieve(customerId);
+}
+
+async function updateCustomer(customerId, data) {
+  console.log("Updating customer details");
 
   // Initialise Stripe.
   const stripeConfig = await createRemoteConfigStrings();
@@ -162,11 +188,8 @@ async function updateCustomer(request) {
 
   // Call the Stripe API to update the customer's details.
   await stripe.customers.update(
-    request.data.stripe_customer_id,
-    {
-      email: request.data.email,
-      name: request.data.name,
-    }
+    customerId,
+    data,
   );
 }
 
