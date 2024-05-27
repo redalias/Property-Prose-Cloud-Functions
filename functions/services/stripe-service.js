@@ -94,8 +94,10 @@ async function createPaymentLink(request) {
   });
 }
 
-async function upgradeCustomerPlan(data) {
+async function upgradeCustomerPlan(event) {
   console.log("Upgrading customer plan");
+
+  const data = event.data.object;
 
   // Save payment details to Firestore.
   await firestoreService.addPayment({
@@ -146,27 +148,61 @@ async function upgradeCustomerPlan(data) {
   );
 }
 
-async function updateCustomerSubscription(data) {
+async function updateCustomerSubscription(event) {
   console.log("Updating customer subscription");
 
-  if (data.cancel_at_period_end === true) {
+  const cancelAtPeriodEndBefore = event.data.previous_attributes.cancel_at_period_end;
+  const cancelAtPeriodEndAfter = event.data.object.cancel_at_period_end;
+
+  if (cancelAtPeriodEndBefore == false && cancelAtPeriodEndAfter == true) {
     // The customer has set to cancel their subscription at the end of
     // their current billing period. Update the user's membership in
     // Firestore.
-
     console.log("Cancelling customer subscription at end of billing period");
 
     // Fetch the customer from Stripe and get their Firebase user ID.
-    const customer = await getCustomer(data.customer);
+    const customer = await getCustomer(event.data.object.customer);
 
-    // Update the user's membership status in Firebase.
+    // Update the user's membership in Firestore.
     await firestoreService.updateUser(
       customer.metadata.firebase_user_id,
       {
         "membership.plan": "Pro (pending downgrade)",
       },
     );
+  } else if (cancelAtPeriodEndBefore == true && cancelAtPeriodEndAfter == false) {
+    // The customer has renewed their subscription after previously
+    //setting it to cancel.
+    console.log("Renewing customer subscription");
+
+    // Fetch the customer from Stripe and get their Firebase user ID.
+    const customer = await getCustomer(event.data.object.customer);
+
+    // Update the user's membership in Firestore.
+    await firestoreService.updateUser(
+      customer.metadata.firebase_user_id,
+      {
+        "membership.plan": "Pro",
+      },
+    );
   }
+}
+
+async function downgradeCustomerPlan(event) {
+  console.log("Downgrading customer plan");
+
+  const data = event.data.object;
+
+  // Fetch the customer from Stripe and get their Firebase user ID.
+  const customer = await getCustomer(data.customer);
+
+  // Update the user's membership status in Firebase.
+  await firestoreService.updateUser(
+    customer.metadata.firebase_user_id,
+    {
+      "membership.plan": "Free",
+    },
+  );
 }
 
 async function getCustomer(customerId) {
@@ -204,11 +240,8 @@ async function webhook(request) {
     stripeConfig.webhookSecret,
   );
 
-  console.log("Event type: " + event.type);
-
-  const data = event.data.object;
-  console.log("Data:");
-  console.log(data);
+  console.log("Event:");
+  console.log(event);
 
   // Check which Stripe events can be handled by this webhoook.
   const supportedStripeEvents = Object.values(stripeEvents);
@@ -218,17 +251,17 @@ async function webhook(request) {
     switch (event.type) {
       case stripeEvents.checkoutSessionCompleted:
         // The customer upgraded from Free to Pro.
-        await upgradeCustomerPlan(data);
+        await upgradeCustomerPlan(event);
         break;
 
       case stripeEvents.customerSubscriptionUpdated:
         // The customer updated their subscription.
-        await updateCustomerSubscription(data);
+        await updateCustomerSubscription(event);
         break;
 
       case stripeEvents.customerSubscriptionDeleted:
         // The customer's pending subscription downgrade has taken effect.
-        await downgradeCustomerPlan(data);
+        await downgradeCustomerPlan(event);
         break;
     }
   } else {
