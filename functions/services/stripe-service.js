@@ -103,7 +103,7 @@ async function upgradeCustomerPlan(data) {
     amount_subtotal: data.amount_subtotal,
     amount_total: data.amount_total,
     currency: data.currency,
-    customer_id: data.customer,
+    stripe_customer_id: data.customer,
     customer_details: data.customer_details,
     date_created_stripe: data.created,
     date_created_firestore: firebaseAdmin.firestore.Timestamp.now(),
