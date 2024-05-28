@@ -14,7 +14,7 @@ const vertexAiService = require("./services/vertex-ai-service");
   See https://docs.stripe.com/api/customer_portal/sessions/create.
 */
 exports.createStripeCustomerPortalSession = functions.https.onCall(
-  async (request, context) => {
+  async (request, response) => {
     try {
       const portalSession = await stripeService.createCustomerPortalSession(request);
 
@@ -25,7 +25,7 @@ exports.createStripeCustomerPortalSession = functions.https.onCall(
     } catch (error) {
       console.error(error);
 
-      res
+      response
         .status(500)
         .send("Error creating Stripe customer portal session");
     }
@@ -33,7 +33,7 @@ exports.createStripeCustomerPortalSession = functions.https.onCall(
 );
 
 exports.createStripePaymentLink = functions.https.onCall(
-  async (request, context) => {
+  async (request, response) => {
     try {
       const paymentLink = await stripeService.createPaymentLink(request);
 
@@ -44,7 +44,7 @@ exports.createStripePaymentLink = functions.https.onCall(
     } catch (error) {
       console.error(error);
 
-      res
+      response
         .status(500)
         .send("Error creating payment link");
     }
@@ -54,7 +54,7 @@ exports.createStripePaymentLink = functions.https.onCall(
 /* 
   Called when certain Stripe events are triggered.
 */
-exports.stripeWebhook = functions.https.onRequest(async (request, res) => {
+exports.stripeWebhook = functions.https.onRequest(async (request, response) => {
   try {
     console.log('Called Stripe webhook');
 
@@ -62,14 +62,14 @@ exports.stripeWebhook = functions.https.onRequest(async (request, res) => {
 
   } catch (error) {
     console.error(error);
-    res
+    response
       .status(500)
       .send("Error handling webhook");
   }
 });
 
 exports.updateStripeCustomer = functions.https.onCall(
-  async (request, context) => {
+  async (request, response) => {
     try {
       await stripeService.updateCustomer(
         request.data.stripe_customer_id,
@@ -86,7 +86,7 @@ exports.updateStripeCustomer = functions.https.onCall(
     } catch (error) {
       console.error(error);
 
-      res
+      response
         .status(500)
         .send("Error updating Stripe customer");
     }
@@ -94,7 +94,7 @@ exports.updateStripeCustomer = functions.https.onCall(
 );
 
 exports.isUserAbleToGenerateCopy = functions.https.onCall(
-  async (request, context) => {
+  async (request, response) => {
     try {
       console.log('isUserAbleToGenerateCopy');
       console.log(request);
@@ -122,7 +122,7 @@ exports.isUserAbleToGenerateCopy = functions.https.onCall(
     } catch (error) {
       console.error(error);
 
-      res
+      response
         .status(500)
         .send("Error checking if user is able to generate copy");
     }
@@ -131,7 +131,7 @@ exports.isUserAbleToGenerateCopy = functions.https.onCall(
 
 
 exports.generateAllCopy = functions.https.onCall(
-  async (request, context) => {
+  async (request, response) => {
     try {
       console.log('generateAllCopy data');
       console.log(request);
@@ -152,7 +152,7 @@ exports.generateAllCopy = functions.https.onCall(
     } catch (error) {
       console.error(error);
 
-      res
+      response
         .status(500)
         .send("Error generating all copy");
     }
@@ -160,7 +160,7 @@ exports.generateAllCopy = functions.https.onCall(
 );
 
 exports.generateContextualCopy = functions.https.onCall(
-  async (request, context) => {
+  async (request, response) => {
     try {
       console.log('generateContextualCopy data');
       console.log(request);
@@ -191,7 +191,7 @@ exports.generateContextualCopy = functions.https.onCall(
     } catch (error) {
       console.error(error);
 
-      res
+      response
         .status(500)
         .send("Error generating contextual copy");
     }
@@ -199,7 +199,7 @@ exports.generateContextualCopy = functions.https.onCall(
 );
 
 exports.generateSingleCopy = functions.https.onCall(
-  async (request, context) => {
+  async (request, response) => {
     try {
       console.log('generateSingleCopy data');
       console.log(request);
@@ -224,7 +224,7 @@ exports.generateSingleCopy = functions.https.onCall(
     } catch (error) {
       console.error(error);
 
-      res
+      response
         .status(500)
         .send("Error generating single copy");
     }
@@ -232,7 +232,7 @@ exports.generateSingleCopy = functions.https.onCall(
 );
 
 
-exports.proxyGoogleMapsPlacesAutocomplete = functions.https.onRequest(async (request, res) => {
+exports.proxyGoogleMapsPlacesAutocomplete = functions.https.onRequest(async (request, response) => {
   console.log('proxyGoogleMapsPlacesAutocomplete');
 
   // Fetch the URL from the request.
@@ -247,7 +247,7 @@ exports.proxyGoogleMapsPlacesAutocomplete = functions.https.onRequest(async (req
     // Process and return the response data
     const responseData = await response.json();
 
-    res
+    response
       .status(200)
       .send(responseData);
 
@@ -255,7 +255,7 @@ exports.proxyGoogleMapsPlacesAutocomplete = functions.https.onRequest(async (req
   } catch (error) {
     console.error(error);
 
-    res
+    response
       .status(400)
       .send(error);
   }
