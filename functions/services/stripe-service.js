@@ -1,5 +1,5 @@
-const firebaseAdmin = require("firebase-admin");
 const config = require("../values/config");
+const firebaseAdmin = require("firebase-admin");
 const firebaseRemoteConfig = require("./firebase-remote-config");
 const firestoreService = require("./firestore-service");
 const stripeEvents = require("../values/stripe-events");
@@ -98,29 +98,6 @@ async function upgradeCustomerPlan(event) {
   console.log("Upgrading customer plan");
 
   const data = event.data.object;
-
-  // Save payment details to Firestore.
-  await firestoreService.addPayment({
-    id: data.id,
-    amount_subtotal: data.amount_subtotal,
-    amount_total: data.amount_total,
-    currency: data.currency,
-    stripe_customer_id: data.customer,
-    customer_details: data.customer_details,
-    date_created_stripe: data.created,
-    date_created_firestore: firebaseAdmin.firestore.Timestamp.now(),
-    date_expired_stripe: data.expires_at,
-    invoice_id: data.invoice,
-    metadata: data.metadata,
-    object: data.object,
-    payment_link: data.payment_link,
-    payment_status: data.payment_status,
-    subscription_id: data.subscription,
-    status: data.status,
-    total_details: data.total_details,
-    url: data.url,
-    user_id: data.client_reference_id,
-  });
 
   // Update the user's membership in Firestore.
   await firestoreService.updateUser(
@@ -242,6 +219,9 @@ async function webhook(request) {
 
   console.log("Event:");
   console.log(event);
+
+  // Save the Stripe event to Firestore.
+  await firestoreService.addStripeEvent(event);
 
   // Check which Stripe events can be handled by this webhoook.
   const supportedStripeEvents = Object.values(stripeEvents);

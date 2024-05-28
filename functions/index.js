@@ -1,6 +1,6 @@
 // Import modules.
-const admin = require("firebase-admin");
-admin.initializeApp();
+const firebaseAdmin = require("firebase-admin");
+firebaseAdmin.initializeApp();
 
 // const config = require("./values/config");
 const firebaseRemoteConfig = require("./services/firebase-remote-config");
@@ -8,7 +8,6 @@ const firestoreService = require("./services/firestore-service");
 const functions = require("firebase-functions/v2");
 const stripeService = require("./services/stripe-service");
 const vertexAiService = require("./services/vertex-ai-service");
-const stripeEvents = require("./values/stripe-events");
 
 /*
   Creates a session of the Stripe Customer Portal.

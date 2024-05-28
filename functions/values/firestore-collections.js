@@ -1,6 +1,6 @@
 const firestoreCollections = {
-  payments: "payments",
   properties: "properties",
+  stripeEvents: "stripe_events",
   users: "users",
 };
 

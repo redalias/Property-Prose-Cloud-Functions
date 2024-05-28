@@ -1,7 +1,7 @@
-const admin = require("firebase-admin");
+const firebaseAdmin = require("firebase-admin");
 
 async function getTemplate() {
-  return await admin.remoteConfig().getTemplate();
+  return await firebaseAdmin.remoteConfig().getTemplate();
 }
 
 /* Fetches the value of a parameter from Firebase Remote Config with the given

@@ -1,19 +1,22 @@
-const admin = require("firebase-admin");
+const firebaseAdmin = require("firebase-admin");
 const firestoreCollections = require("../values/firestore-collections");
 
-async function addPayment(data) {
+async function addStripeEvent(data) {
   try {
-    const db = admin.firestore();
+    const db = firebaseAdmin.firestore();
 
-    await db.collection(firestoreCollections.payments).add(data);
+    await db.collection(firestoreCollections.stripeEvents).add({
+      date_created_firestore: firebaseAdmin.firestore.Timestamp.now(),
+      event: data,
+    });
   } catch (error) {
-    console.error("Error adding payment:", error);
+    console.error("Error adding Stripe event:", error);
   }
 }
 
 async function updateUser(userId, updatedData) {
   try {
-    const db = admin.firestore();
+    const db = firebaseAdmin.firestore();
 
     await db
       .collection(firestoreCollections.users)
@@ -34,7 +37,7 @@ async function updateUser(userId, updatedData) {
 
 async function user(userId) {
   try {
-    const db = admin.firestore();
+    const db = firebaseAdmin.firestore();
 
     let user = await db
       .collection(firestoreCollections.users)
@@ -55,7 +58,7 @@ async function user(userId) {
 }
 
 module.exports = {
-  addPayment,
+  addStripeEvent,
   updateUser,
   user,
 };
