@@ -244,6 +244,8 @@ async function webhook(request) {
         await downgradeCustomerPlan(event);
         break;
     }
+
+    console.log("Webhook handled successfully for event " + event.id);
   } else {
     throw new Error(`Unhandled event type: ${event.type}`);
   }

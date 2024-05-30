@@ -60,8 +60,11 @@ exports.stripeWebhook = functions.https.onRequest(async (request, response) => {
 
     await stripeService.webhook(request);
 
+    response.status(200);
+
   } catch (error) {
     console.error(error);
+
     response
       .status(500)
       .send("Error handling webhook");
