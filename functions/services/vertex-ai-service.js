@@ -1,4 +1,5 @@
-const http = require("http");
+const { VertexAI } = require('@google-cloud/vertexai');
+const config = require("../values/config");
 const firebaseRemoteConfig = require("./firebase-remote-config");
 
 async function createPromptForAllCopy(address, features, contactDetails) {
@@ -69,39 +70,29 @@ async function sendPromptToGemini(prompt) {
     console.log('sendPromptToGemini()');
     console.log('prompt: ' + prompt);
 
-    const apiKey = 'AIzaSyD0Z8yGfd5Zc77Vav3kYodZHekjFlcrh0c';
-    const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + apiKey;
-    const method = 'POST';
-
-    const body = {
-      'contents': [{
-        'parts': [{
-          'text': prompt,
-        }]
-      }]
-    };
-
-    const response = await fetch(
-      apiUrl, {
-      method: method,
-      body: JSON.stringify(body),
+    const vertexAI = new VertexAI({
+      project: config.isTestMode ?
+        config.googleCloudProjectNameTest :
+        config.googleCloudProjectNameLive,
+      location: config.googleCloudProjectLocation
     });
 
-    let responseText = await response.text();
-    responseText = extractJSONString(responseText);
+    const generativeModel = vertexAI.getGenerativeModel({
+      model: config.isTestMode ?
+        config.llmModelTest :
+        config.llmModelLive,
+    });
 
-    const responseJSON = JSON.parse(responseText);
+    const resp = await generativeModel.generateContent(prompt);
 
-    console.log('Response text:');
-    console.log(responseText);
+    const response = await resp.response;
+    console.log("Response:");
+    console.log(response);
 
-    console.log('Response JSON:');
-    console.log(responseJSON);
+    console.log("Copy response:");
+    console.log(response.candidates[0].content.parts[0].text);
 
-    console.log("responseJSON.candidates[0].content.parts[0].text");
-    console.log(responseJSON.candidates[0].content.parts[0].text);
-
-    return responseJSON.candidates[0].content.parts[0].text;
+    return response.candidates[0].content.parts[0].text;
 
   } catch (error) {
     console.error(error);
