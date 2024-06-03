@@ -35,8 +35,10 @@ fi
 # Choose Firebase project based on the first argument
 if [ "$1" = "dev" ]; then
     PROJECT_NAME=$DEV_PROJECT_NAME
+    CONFIG_FILE="config-dev.js"
 elif [ "$1" = "prod" ]; then
     PROJECT_NAME=$PROD_PROJECT_NAME
+    CONFIG_FILE="config-prod.js"
 
     # Prompt for confirmation before deploying to production
     echo "You are about to deploy to PRODUCTION. Are you sure? (y/n)"
@@ -61,6 +63,13 @@ calculate_duration() {
 SECONDS=0
 
 echo "Starting deployment process..."
+
+# Copy the appropriate config file
+echo "Copying configuration file..."
+START_TIME=$SECONDS
+cp ./functions/values/$CONFIG_FILE ./functions/values/config.js
+calculate_duration $START_TIME
+echo "Configuration file copied successfully."
 
 # Configure Firebase project
 echo "Configuring Firebase project..."

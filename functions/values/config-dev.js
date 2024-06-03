@@ -1,6 +1,6 @@
 const config = {
   // The name of the project in Google Cloud.
-  googleCloudProjectName: "property-prose",
+  googleCloudProjectName: "property-prose-dev",
 
   // The geographic location of the project in Google Cloud.
   googleCloudProjectLocation: "us-central1",
