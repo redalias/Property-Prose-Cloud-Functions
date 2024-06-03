@@ -200,7 +200,7 @@ async function updateCustomer(customerId, data) {
   const stripe = require("stripe")(stripeConfig.secretKey);
 
   // Call the Stripe API to update the customer's details.
-  await stripe.customers.update(
+  return await stripe.customers.update(
     customerId,
     data,
   );

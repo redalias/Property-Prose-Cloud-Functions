@@ -74,7 +74,7 @@ exports.stripeWebhook = functions.https.onRequest(async (request, response) => {
 exports.updateStripeCustomer = functions.https.onCall(
   async (request, response) => {
     try {
-      await stripeService.updateCustomer(
+      const response = await stripeService.updateCustomer(
         request.data.stripe_customer_id,
         {
           email: request.data.email,
@@ -83,9 +83,9 @@ exports.updateStripeCustomer = functions.https.onCall(
       );
 
       console.log("Updated Stripe customer");
-      console.log(portalSession);
+      console.log(response);
 
-      return portalSession;
+      return response;
     } catch (error) {
       console.error(error);
 
