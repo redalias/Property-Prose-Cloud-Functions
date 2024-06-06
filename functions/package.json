@@ -14,6 +14,7 @@
   },
   "main": "index.js",
   "dependencies": {
+    "@google-cloud/vertexai": "^1.2.0",
     "cors": "^2.8.5",
     "firebase": "^10.7.1",
     "firebase-admin": "^11.4.0",
