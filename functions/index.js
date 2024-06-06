@@ -238,23 +238,31 @@ exports.generateSingleCopy = functions.https.onCall(
 exports.proxyGoogleMapsPlacesAutocomplete = functions.https.onRequest(async (request, response) => {
   console.log('proxyGoogleMapsPlacesAutocomplete');
 
-  // Fetch the URL from the request.
-  var url = request.url;
-
-  // Remove the prefix from the URL.
-  url = url.replace('/?url=', '');
-
   try {
-    const response = await fetch(url);
+    // Fetch parameters from the request.
+    var targetUrl = request.query['target_url'];
+    var firebaseUserIdToken = request.query['firebase_user_id_token'];
+    var apiKey = request.query['key'];
+    var components = request.query['components'];
 
-    // Process and return the response data
-    const responseData = await response.json();
+    // Construct the Google Maps request.
+    var googleMapsRequestUrl = targetUrl + "&key=" + apiKey + "&components=" + components;
+
+    console.log("Google Maps autocomplete request URL: " + googleMapsRequestUrl);
+    console.log(googleMapsRequestUrl);
+
+    // Execute the authenticated request and return the data.
+    const googleMapsResponse = await fetch(googleMapsRequestUrl, {
+      'Authorization': 'Bearer ' + firebaseUserIdToken
+    });
+
+    const googleMapsResponseData = await googleMapsResponse.json();
 
     response
       .status(200)
-      .send(responseData);
+      .send(googleMapsResponseData);
 
-    return responseData;
+    // return responseData;
   } catch (error) {
     console.error(error);
 
