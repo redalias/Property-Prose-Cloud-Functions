@@ -3,51 +3,34 @@ const firebaseAdmin = require("firebase-admin");
 const firebaseRemoteConfig = require("./firebase-remote-config");
 const firestoreService = require("./firestore-service");
 const stripeEvents = require("../values/stripe-events");
-const stripeRemoteConfigKeys = require("../values/stripe-remote-config-keys");
 
 // Fetch Stripe keys from Firebase Remote Config.
 const createRemoteConfigStrings = async () => {
   try {
-    const customerPortalUrl = config.isTestMode ?
-      stripeRemoteConfigKeys.customerPortalTestModeUrl :
-      stripeRemoteConfigKeys.customerPortalLiveModeUrl;
+    const remoteConfigParameterName = config.stripeRemoteConfigKeys.remoteConfigParameterName;
 
-    const secretKey = config.isTestMode ?
-      stripeRemoteConfigKeys.secretTestModeKey :
-      stripeRemoteConfigKeys.secretLiveModeKey;
-
-    const webhookSecret = config.isTestMode ?
-      stripeRemoteConfigKeys.webhookTestModeSecret :
-      stripeRemoteConfigKeys.webhookLiveModeSecret;
-
-    const priceId = config.isTestMode ?
-      stripeRemoteConfigKeys.testModePriceId :
-      stripeRemoteConfigKeys.liveModePriceId;
-
-    const paymentSuccessfulText = stripeRemoteConfigKeys.paymentSuccessfulText;
-
-    return {
-      customerPortalUrl: await firebaseRemoteConfig.getParameterFromGroup(
-        stripeRemoteConfigKeys.remoteConfigParameterName,
-        customerPortalUrl,
-      ),
-      secretKey: await firebaseRemoteConfig.getParameterFromGroup(
-        stripeRemoteConfigKeys.remoteConfigParameterName,
-        secretKey,
-      ),
-      webhookSecret: await firebaseRemoteConfig.getParameterFromGroup(
-        stripeRemoteConfigKeys.remoteConfigParameterName,
-        webhookSecret,
+    const stripeRemoteConfig = {
+      paymentSuccessfulText: await firebaseRemoteConfig.getParameterFromGroup(
+        remoteConfigParameterName,
+        config.stripeRemoteConfigKeys.paymentSuccessfulText,
       ),
       priceId: await firebaseRemoteConfig.getParameterFromGroup(
-        stripeRemoteConfigKeys.remoteConfigParameterName,
-        priceId,
+        remoteConfigParameterName,
+        config.stripeRemoteConfigKeys.priceId,
       ),
-      paymentSuccessfulText: await firebaseRemoteConfig.getParameterFromGroup(
-        stripeRemoteConfigKeys.remoteConfigParameterName,
-        paymentSuccessfulText,
+      secretKey: await firebaseRemoteConfig.getParameterFromGroup(
+        remoteConfigParameterName,
+        config.stripeRemoteConfigKeys.secretKey,
+      ),
+      webhookSecret: await firebaseRemoteConfig.getParameterFromGroup(
+        remoteConfigParameterName,
+        config.stripeRemoteConfigKeys.webhookSecret,
       ),
     };
+
+    console.log(stripeRemoteConfig);
+
+    return stripeRemoteConfig;
   } catch (error) {
     console.error(
       "Error fetching Stripe configuration from Remote Config:",
@@ -226,6 +209,7 @@ async function webhook(request) {
   // Check which Stripe events can be handled by this webhoook.
   const supportedStripeEvents = Object.values(stripeEvents);
   const isSupportedStripeEvent = supportedStripeEvents.indexOf(event.type) > -1;
+  console.log("Webhook supports this Stripe event?" + isSupportedStripeEvent);
 
   if (isSupportedStripeEvent) {
     switch (event.type) {
