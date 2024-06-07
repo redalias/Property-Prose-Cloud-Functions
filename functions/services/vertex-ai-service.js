@@ -71,16 +71,12 @@ async function sendPromptToGemini(prompt) {
     console.log('prompt: ' + prompt);
 
     const vertexAI = new VertexAI({
-      project: config.isTestMode ?
-        config.googleCloudProjectNameTest :
-        config.googleCloudProjectNameLive,
+      project: config.googleCloudProjectName,
       location: config.googleCloudProjectLocation
     });
 
     const generativeModel = vertexAI.getGenerativeModel({
-      model: config.isTestMode ?
-        config.llmModelTest :
-        config.llmModelLive,
+      model: config.llmModel,
     });
 
     const resp = await generativeModel.generateContent(prompt);
