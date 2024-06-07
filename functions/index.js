@@ -235,18 +235,27 @@ exports.generateSingleCopy = functions.https.onCall(
 );
 
 
-exports.proxyGoogleMapsPlacesAutocomplete = functions.https.onRequest(async (request, response) => {
-  console.log('proxyGoogleMapsPlacesAutocomplete');
+exports.proxyGoogleMapsPlacesAutocomplete = functions.https.onRequest(
+  async (request, response) => {
+    console.log('proxyGoogleMapsPlacesAutocomplete');
 
-  try {
-    // Fetch parameters from the request.
-    var targetUrl = request.query['target_url'];
-    var firebaseUserIdToken = request.query['firebase_user_id_token'];
-    var apiKey = request.query['key'];
-    var components = request.query['components'];
+    try {
+      // Set CORS headers for the response.
+      response.set('Access-Control-Allow-Origin', '*');
+      response.set('Access-Control-Allow-Methods', 'GET, POST');
+      response.set('Access-Control-Allow-Headers', 'Content-Type');
+
+      // Fetch parameters from the request.
+      var targetUrl = request.query['target_url'];
+      var firebaseUserIdToken = request.query['firebase_user_id_token'];
+      var apiKey = request.query['key'];
+      var components = request.query['components'];
 
     // Construct the Google Maps request.
-    var googleMapsRequestUrl = targetUrl + "&key=" + apiKey + "&components=" + components;
+      var googleMapsRequestUrl = targetUrl + "&key=" + apiKey;
+
+      // TODO: uncomment below to use components, once the https://country.is location fetch is setup.
+      // var googleMapsRequestUrl = targetUrl + "&key=" + apiKey + "&components=" + components;
 
     console.log("Google Maps autocomplete request URL: " + googleMapsRequestUrl);
     console.log(googleMapsRequestUrl);
