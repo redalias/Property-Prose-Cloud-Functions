@@ -82,6 +82,7 @@ async function sendPromptToGemini(prompt) {
     const resp = await generativeModel.generateContent(prompt);
 
     const response = await resp.response;
+
     console.log("Response:");
     console.log(response);
 

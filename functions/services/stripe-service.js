@@ -77,8 +77,8 @@ async function createPaymentLink(request) {
   });
 }
 
-async function upgradeCustomerPlan(event) {
-  console.log("Upgrading customer plan");
+async function upgradeCustomerSubscription(event) {
+  console.log("Upgrading customer subscription");
 
   const data = event.data.object;
 
@@ -148,8 +148,8 @@ async function updateCustomerSubscription(event) {
   }
 }
 
-async function downgradeCustomerPlan(event) {
-  console.log("Downgrading customer plan");
+async function downgradeCustomerSubscription(event) {
+  console.log("Downgrading customer subscription");
 
   const data = event.data.object;
 
@@ -209,13 +209,13 @@ async function webhook(request) {
   // Check which Stripe events can be handled by this webhoook.
   const supportedStripeEvents = Object.values(stripeEvents);
   const isSupportedStripeEvent = supportedStripeEvents.indexOf(event.type) > -1;
-  console.log("Webhook supports this Stripe event?" + isSupportedStripeEvent);
+  console.log("Webhook supports this Stripe event? " + isSupportedStripeEvent);
 
   if (isSupportedStripeEvent) {
     switch (event.type) {
       case stripeEvents.checkoutSessionCompleted:
         // The customer upgraded from Free to Pro.
-        await upgradeCustomerPlan(event);
+        await upgradeCustomerSubscription(event);
         break;
 
       case stripeEvents.customerSubscriptionUpdated:
@@ -225,7 +225,7 @@ async function webhook(request) {
 
       case stripeEvents.customerSubscriptionDeleted:
         // The customer's pending subscription downgrade has taken effect.
-        await downgradeCustomerPlan(event);
+        await downgradeCustomerSubscription(event);
         break;
     }
 
@@ -240,8 +240,9 @@ module.exports = {
   createPaymentLink,
   createCustomerPortalSession,
   createRemoteConfigStrings,
-  upgradeCustomerPlan,
+  upgradeCustomerSubscription,
   updateCustomerSubscription,
+  downgradeCustomerSubscription,
   updateCustomer,
   webhook,
 };
