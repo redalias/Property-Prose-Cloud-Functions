@@ -82,14 +82,14 @@ async function upgradeCustomerSubscription(event) {
 
   const data = event.data.object;
 
-  // Update the user's membership in Firestore.
+  // Update the user's subscription in Firestore.
   await firestoreService.updateUser(
     data.metadata.firebase_user_id,
     {
-      membership: {
+      subscription: {
         date_latest_payment: firebaseAdmin.firestore.Timestamp.now(),
         latest_payment_id: data.id,
-        plan: "Pro",
+        status: "Pro",
         stripe_customer_id: data.customer,
         latest_subscription_id: data.subscription,
       }
@@ -116,18 +116,18 @@ async function updateCustomerSubscription(event) {
 
   if (cancelAtPeriodEndBefore == false && cancelAtPeriodEndAfter == true) {
     // The customer has set to cancel their subscription at the end of
-    // their current billing period. Update the user's membership in
+    // their current billing period. Update the user's subscription in
     // Firestore.
     console.log("Cancelling customer subscription at end of billing period");
 
     // Fetch the customer from Stripe and get their Firebase user ID.
     const customer = await getCustomer(event.data.object.customer);
 
-    // Update the user's membership in Firestore.
+    // Update the user's subscription in Firestore.
     await firestoreService.updateUser(
       customer.metadata.firebase_user_id,
       {
-        "membership.plan": "Pro (pending downgrade)",
+        "subscription.status": "Pro (pending downgrade)",
       },
     );
   } else if (cancelAtPeriodEndBefore == true && cancelAtPeriodEndAfter == false) {
@@ -138,11 +138,11 @@ async function updateCustomerSubscription(event) {
     // Fetch the customer from Stripe and get their Firebase user ID.
     const customer = await getCustomer(event.data.object.customer);
 
-    // Update the user's membership in Firestore.
+    // Update the user's subscription in Firestore.
     await firestoreService.updateUser(
       customer.metadata.firebase_user_id,
       {
-        "membership.plan": "Pro",
+        "subscription.status": "Pro",
       },
     );
   }
@@ -156,11 +156,11 @@ async function downgradeCustomerSubscription(event) {
   // Fetch the customer from Stripe and get their Firebase user ID.
   const customer = await getCustomer(data.customer);
 
-  // Update the user's membership status in Firebase.
+  // Update the user's subscription status in Firebase.
   await firestoreService.updateUser(
     customer.metadata.firebase_user_id,
     {
-      "membership.plan": "Free",
+      "subscription.status": "Free",
     },
   );
 }
@@ -172,7 +172,13 @@ async function getCustomer(customerId) {
   const stripeConfig = await createRemoteConfigStrings();
   const stripe = require("stripe")(stripeConfig.secretKey);
 
-  return await stripe.customers.retrieve(customerId);
+  // Get the customer.
+  const customer = await stripe.customers.retrieve(customerId);
+
+  console.log('Customer:');
+  console.log(customer);
+
+  return customer;
 }
 
 async function updateCustomer(customerId, data) {
