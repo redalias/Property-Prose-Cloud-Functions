@@ -58,9 +58,9 @@ exports.stripeWebhook = functions.https.onRequest(async (request, response) => {
   try {
     console.log('Called Stripe webhook');
 
-    await stripeService.webhook(request);
+    response.status(200).send();
 
-    response.status(200);
+    await stripeService.webhook(request);
 
   } catch (error) {
     console.error(error);
@@ -251,32 +251,32 @@ exports.proxyGoogleMapsPlacesAutocomplete = functions.https.onRequest(
       var apiKey = request.query['key'];
       var components = request.query['components'];
 
-    // Construct the Google Maps request.
+      // Construct the Google Maps request.
       var googleMapsRequestUrl = targetUrl + "&key=" + apiKey;
 
       // TODO: uncomment below to use components, once the https://country.is location fetch is setup.
       // var googleMapsRequestUrl = targetUrl + "&key=" + apiKey + "&components=" + components;
 
-    console.log("Google Maps autocomplete request URL: " + googleMapsRequestUrl);
-    console.log(googleMapsRequestUrl);
+      console.log("Google Maps autocomplete request URL: " + googleMapsRequestUrl);
+      console.log(googleMapsRequestUrl);
 
-    // Execute the authenticated request and return the data.
-    const googleMapsResponse = await fetch(googleMapsRequestUrl, {
-      'Authorization': 'Bearer ' + firebaseUserIdToken
-    });
+      // Execute the authenticated request and return the data.
+      const googleMapsResponse = await fetch(googleMapsRequestUrl, {
+        'Authorization': 'Bearer ' + firebaseUserIdToken
+      });
 
-    const googleMapsResponseData = await googleMapsResponse.json();
+      const googleMapsResponseData = await googleMapsResponse.json();
 
-    response
-      .status(200)
-      .send(googleMapsResponseData);
+      response
+        .status(200)
+        .send(googleMapsResponseData);
 
-    // return responseData;
-  } catch (error) {
-    console.error(error);
+      // return responseData;
+    } catch (error) {
+      console.error(error);
 
-    response
-      .status(400)
-      .send(error);
-  }
-});
+      response
+        .status(400)
+        .send(error);
+    }
+  });
