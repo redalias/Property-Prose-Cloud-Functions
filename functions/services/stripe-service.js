@@ -87,11 +87,11 @@ async function upgradeCustomerSubscription(event) {
     data.metadata.firebase_user_id,
     {
       subscription: {
-        date_latest_payment: firebaseAdmin.firestore.Timestamp.now(),
-        latest_payment_id: data.id,
+        date_upgraded: firebaseAdmin.firestore.Timestamp.now(),
+        latest_invoice_id: data.id,
         status: "Pro",
         stripe_customer_id: data.customer,
-        latest_subscription_id: data.subscription,
+        subscription_id: data.subscription,
       }
     },
   );
@@ -114,6 +114,12 @@ async function updateCustomerSubscription(event) {
   const cancelAtPeriodEndBefore = event.data.previous_attributes.cancel_at_period_end;
   const cancelAtPeriodEndAfter = event.data.object.cancel_at_period_end;
 
+  const currentPeriodStartBefore = event.data.previous_attributes.current_period_start;
+  const currentPeriodStartAfter = event.data.object.current_period_start;
+
+  const currentPeriodEndBefore = event.data.previous_attributes.current_period_end;
+  const currentPeriodEndAfter = event.data.object.current_period_end;
+
   if (cancelAtPeriodEndBefore == false && cancelAtPeriodEndAfter == true) {
     // The customer has set to cancel their subscription at the end of
     // their current billing period. Update the user's subscription in
@@ -127,13 +133,17 @@ async function updateCustomerSubscription(event) {
     await firestoreService.updateUser(
       customer.metadata.firebase_user_id,
       {
-        "subscription.status": "Pro (pending downgrade)",
+        subscription: {
+          date_cancelled: firebaseAdmin.firestore.Timestamp.now(),
+          status: "Pro (pending downgrade)",
+          stripe_customer_id: event.data.object.customer,
+        }
       },
     );
   } else if (cancelAtPeriodEndBefore == true && cancelAtPeriodEndAfter == false) {
-    // The customer has renewed their subscription after previously
-    //setting it to cancel.
-    console.log("Renewing customer subscription");
+    // The customer has reactivated their subscription after previously
+    // setting it to cancel.
+    console.log("Reactivating customer subscription");
 
     // Fetch the customer from Stripe and get their Firebase user ID.
     const customer = await getCustomer(event.data.object.customer);
@@ -142,7 +152,33 @@ async function updateCustomerSubscription(event) {
     await firestoreService.updateUser(
       customer.metadata.firebase_user_id,
       {
-        "subscription.status": "Pro",
+        subscription: {
+          date_reactivated: firebaseAdmin.firestore.Timestamp.now(),
+          status: "Pro",
+          stripe_customer_id: event.data.object.customer,
+          subscription_id: event.data.object.id,
+        }
+      },
+    );
+
+  } else if ((currentPeriodStartBefore != currentPeriodStartAfter) &&
+    (currentPeriodEndBefore != currentPeriodEndAfter)) {
+    // The customer has renewed their subscription for another billing period.
+    console.log("Renewing customer subscription for another billing period");
+
+    // Fetch the customer from Stripe and get their Firebase user ID.
+    const customer = await getCustomer(event.data.object.customer);
+
+    // Update the user's subscription in Firestore.
+    await firestoreService.updateUser(
+      customer.metadata.firebase_user_id,
+      {
+        subscription: {
+          date_renewed: firebaseAdmin.firestore.Timestamp.now(),
+          latest_invoice_id: event.data.object.id,
+          status: "Pro",
+          subscription_id: event.data.object.subscription,
+        }
       },
     );
   }
@@ -225,7 +261,8 @@ async function webhook(request) {
         break;
 
       case stripeEvents.customerSubscriptionUpdated:
-        // The customer updated their subscription.
+        // The customer updated their subscription. For example, they renewed,
+        // canceled, or reactivated it.
         await updateCustomerSubscription(event);
         break;
 
@@ -240,7 +277,6 @@ async function webhook(request) {
     throw new Error(`Unhandled event type: ${event.type}`);
   }
 }
-
 
 module.exports = {
   createPaymentLink,
