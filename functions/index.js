@@ -58,9 +58,9 @@ exports.stripeWebhook = functions.https.onRequest(async (request, response) => {
   try {
     console.log('Called Stripe webhook');
 
-    response.status(200).send();
-
     await stripeService.webhook(request);
+
+    response.status(200).send();
 
   } catch (error) {
     console.error(error);
