@@ -8,6 +8,9 @@ const config = {
   // The AI model used to generate the copy.
   llmModel: "gemini-1.5-flash",
 
+  // Number of times to retry a failed AI model prompt before stopping altogether.
+  llmRetryCount: 2,
+
   // Firebase Remote Config Keys used specifically for Stripe.
   stripeRemoteConfigKeys: {
     // The text shown to the user after purchasing Copyspark Pro.

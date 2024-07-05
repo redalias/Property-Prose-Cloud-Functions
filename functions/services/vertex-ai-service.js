@@ -66,33 +66,43 @@ async function createPromptForSingleCopy(copyElementType, address, features, con
 }
 
 async function sendPromptToGemini(prompt) {
-  try {
-    console.log('sendPromptToGemini()');
-    console.log('prompt: ' + prompt);
+  console.log('sendPromptToGemini()');
+  console.log('prompt: ' + prompt);
 
-    const vertexAI = new VertexAI({
-      project: config.googleCloudProjectName,
-      location: config.googleCloudProjectLocation
-    });
+  let retries = 0;
+  const maxRetries = config.llmRetryCount;
 
-    const generativeModel = vertexAI.getGenerativeModel({
-      model: config.llmModel,
-    });
+  while (retries <= maxRetries) {
+    if (retries > 0) {
+      console.warn(`Attempting retry ${retries} of ${maxRetries}...`);
+    }
 
-    const resp = await generativeModel.generateContent(prompt);
+    try {
+      const vertexAI = new VertexAI({
+        project: config.googleCloudProjectName,
+        location: config.googleCloudProjectLocation
+      });
 
-    const response = await resp.response;
+      const generativeModel = vertexAI.getGenerativeModel({
+        model: config.llmModel,
+      });
 
-    console.log("Response:");
-    console.log(response);
+      const resp = await generativeModel.generateContent(prompt);
+      const response = await resp.response;
 
-    console.log("Copy response:");
-    console.log(response.candidates[0].content.parts[0].text);
+      console.log("Response:");
+      console.log(response);
 
-    return response.candidates[0].content.parts[0].text;
+      console.log("Copy response:");
+      console.log(response.candidates[0].content.parts[0].text);
 
-  } catch (error) {
-    console.error(error);
+      return response.candidates[0].content.parts[0].text;
+
+    } catch (error) {
+      console.error(error);
+
+      retries++;
+    }
   }
 }
 
