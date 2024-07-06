@@ -5,7 +5,7 @@ const LoggingService = require("./logging-service");
 
 class FirestoreService {
   constructor() {
-    this.logger = new LoggingService(this.constructor.name);
+    this.log = new LoggingService(this.constructor.name);
   }
 
   async addStripeEvent(data) {
@@ -17,7 +17,7 @@ class FirestoreService {
         event: data,
       });
     } catch (error) {
-      this.logger.error("Error adding Stripe event:", error);
+      this.log.error("Error adding Stripe event:", error);
     }
   }
 
@@ -30,15 +30,15 @@ class FirestoreService {
         .doc(userId)
         .update(updatedData);
 
-      this.logger.info(
+      this.log.info(
         "User " + userId + " updated successfully",
       );
     } catch (error) {
-      this.logger.error(
+      this.log.error(
         "Error updating user " + userId,
       );
 
-      this.logger.error(error);
+      this.log.error(error);
     }
   }
 
@@ -50,17 +50,17 @@ class FirestoreService {
         .collection(firestoreCollections.users)
         .doc(userId);
 
-      this.logger.info(
+      this.log.info(
         "User " + userId + " updated successfully",
       );
 
       return user;
     } catch (error) {
-      this.logger.error(
+      this.log.error(
         "Error fetching user " + userId,
       );
 
-      this.logger.error(error);
+      this.log.error(error);
     }
   }
 }

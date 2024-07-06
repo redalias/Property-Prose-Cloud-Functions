@@ -16,18 +16,18 @@ const VertexAiService = require("./services/vertex-ai-service");
 */
 exports.createStripeCustomerPortalSession = functions.https.onCall(
   async (request, response) => {
-    const logger = new LoggingService('MAIN');
+    const log = new LoggingService('MAIN');
 
     try {
       const stripeService = new StripeService();
       const portalSession = await stripeService.createCustomerPortalSession(request);
 
-      logger.info("Created Stripe customer portal session");
-      logger.info(portalSession);
+      log.info("Created Stripe customer portal session");
+      log.info(portalSession);
 
       return portalSession;
     } catch (error) {
-      logger.error(error);
+      log.error(error);
 
       response
         .status(500)
@@ -38,18 +38,18 @@ exports.createStripeCustomerPortalSession = functions.https.onCall(
 
 exports.createStripePaymentLink = functions.https.onCall(
   async (request, response) => {
-    const logger = new LoggingService('MAIN');
+    const log = new LoggingService('MAIN');
 
     try {
       const stripeService = new StripeService();
       const paymentLink = await stripeService.createPaymentLink(request);
 
-      logger.info("Created payment link");
-      logger.info(paymentLink);
+      log.info("Created payment link");
+      log.info(paymentLink);
 
       return paymentLink.url;
     } catch (error) {
-      logger.error(error);
+      log.error(error);
 
       response
         .status(500)
@@ -62,10 +62,10 @@ exports.createStripePaymentLink = functions.https.onCall(
   Called when certain Stripe events are triggered.
 */
 exports.stripeWebhook = functions.https.onRequest(async (request, response) => {
-  const logger = new LoggingService('MAIN');
+  const log = new LoggingService('MAIN');
 
   try {
-    logger.info('Called Stripe webhook');
+    log.info('Called Stripe webhook');
 
     const stripeService = new StripeService();
     await stripeService.webhook(request);
@@ -73,7 +73,7 @@ exports.stripeWebhook = functions.https.onRequest(async (request, response) => {
     response.status(200).send();
 
   } catch (error) {
-    logger.error(error);
+    log.error(error);
 
     response
       .status(500)
@@ -83,7 +83,7 @@ exports.stripeWebhook = functions.https.onRequest(async (request, response) => {
 
 exports.updateStripeCustomer = functions.https.onCall(
   async (request, response) => {
-    const logger = new LoggingService('MAIN');
+    const log = new LoggingService('MAIN');
 
     try {
       const stripeService = new StripeService();
@@ -95,12 +95,12 @@ exports.updateStripeCustomer = functions.https.onCall(
         }
       );
 
-      logger.info("Updated Stripe customer");
-      logger.info(logger.formatObject(response));
+      log.info("Updated Stripe customer");
+      log.info(log.formatObject(response));
 
       return response;
     } catch (error) {
-      logger.error(error);
+      log.error(error);
 
       response
         .status(500)
@@ -111,11 +111,11 @@ exports.updateStripeCustomer = functions.https.onCall(
 
 exports.isUserAbleToGenerateCopy = functions.https.onCall(
   async (request, response) => {
-    const logger = new LoggingService('MAIN');
+    const log = new LoggingService('MAIN');
 
     try {
-      logger.info('isUserAbleToGenerateCopy');
-      logger.info(logger.formatObject(request));
+      log.info('isUserAbleToGenerateCopy');
+      log.info(log.formatObject(request));
 
       // Fetch user data from Firestore.
       const firestoreService = new FirestoreService();
@@ -140,7 +140,7 @@ exports.isUserAbleToGenerateCopy = functions.https.onCall(
       }
 
     } catch (error) {
-      logger.error(error);
+      log.error(error);
 
       response
         .status(500)
@@ -152,11 +152,11 @@ exports.isUserAbleToGenerateCopy = functions.https.onCall(
 
 exports.generateAllCopy = functions.https.onCall(
   async (request, response) => {
-    const logger = new LoggingService('MAIN');
+    const log = new LoggingService('MAIN');
 
     try {
-      logger.info('generateAllCopy data');
-      logger.info(logger.formatObject(request));
+      log.info('generateAllCopy data');
+      log.info(log.formatObject(request));
 
       const address = request.data['address'];
       const features = request.data['features'];
@@ -169,11 +169,11 @@ exports.generateAllCopy = functions.https.onCall(
         contactDetails,
       );
 
-      logger.info(logger.formatObject(response));
+      log.info(log.formatObject(response));
 
       return response;
     } catch (error) {
-      logger.error(error);
+      log.error(error);
 
       response
         .status(500)
@@ -184,11 +184,11 @@ exports.generateAllCopy = functions.https.onCall(
 
 exports.generateContextualCopy = functions.https.onCall(
   async (request, response) => {
-    const logger = new LoggingService('MAIN');
+    const log = new LoggingService('MAIN');
 
     try {
-      logger.info('generateContextualCopy data');
-      logger.info(logger.formatObject(request));
+      log.info('generateContextualCopy data');
+      log.info(log.formatObject(request));
 
       const copyElementType = request.data['copy_element_type'];
       const action = request.data['action'];
@@ -211,11 +211,11 @@ exports.generateContextualCopy = functions.https.onCall(
         maxLength
       );
 
-      logger.info(logger.formatObject(response));
+      log.info(log.formatObject(response));
 
       return response;
     } catch (error) {
-      logger.error(error);
+      log.error(error);
 
       response
         .status(500)
@@ -226,11 +226,11 @@ exports.generateContextualCopy = functions.https.onCall(
 
 exports.generateSingleCopy = functions.https.onCall(
   async (request, response) => {
-    const logger = new LoggingService('MAIN');
+    const log = new LoggingService('MAIN');
 
     try {
-      logger.info('generateSingleCopy data');
-      logger.info(logger.formatObject(request));
+      log.info('generateSingleCopy data');
+      log.info(log.formatObject(request));
 
       const copyElementType = request.data['copy_element_type'];
       const address = request.data['address'];
@@ -247,11 +247,11 @@ exports.generateSingleCopy = functions.https.onCall(
         maxLength,
       );
 
-      logger.info(logger.formatObject(response));
+      log.info(log.formatObject(response));
 
       return response;
     } catch (error) {
-      logger.error(error);
+      log.error(error);
 
       response
         .status(500)
@@ -263,7 +263,7 @@ exports.generateSingleCopy = functions.https.onCall(
 
 exports.proxyGoogleMapsPlacesAutocomplete = functions.https.onRequest(
   async (request, response) => {
-    const logger = new LoggingService('MAIN');
+    const log = new LoggingService('MAIN');
 
     try {
       // Set CORS headers for the response.
@@ -283,8 +283,8 @@ exports.proxyGoogleMapsPlacesAutocomplete = functions.https.onRequest(
       // TODO: uncomment below to use components, once the https://country.is location fetch is setup.
       // var googleMapsRequestUrl = targetUrl + "&key=" + apiKey + "&components=" + components;
 
-      logger.info("Google Maps autocomplete request URL: " + googleMapsRequestUrl);
-      logger.info(googleMapsRequestUrl);
+      log.info("Google Maps autocomplete request URL: " + googleMapsRequestUrl);
+      log.info(googleMapsRequestUrl);
 
       // Execute the authenticated request and return the data.
       const googleMapsResponse = await fetch(googleMapsRequestUrl, {
@@ -299,7 +299,7 @@ exports.proxyGoogleMapsPlacesAutocomplete = functions.https.onRequest(
 
       // return responseData;
     } catch (error) {
-      logger.error(error);
+      log.error(error);
 
       response
         .status(400)

@@ -3,7 +3,7 @@ const LoggingService = require("./logging-service");
 
 class FirebaseRemoteConfigService {
   constructor() {
-    this.logger = new LoggingService(this.constructor.name);
+    this.log = new LoggingService(this.constructor.name);
   }
 
   async getTemplate() {
@@ -21,7 +21,7 @@ class FirebaseRemoteConfigService {
   * @returns {dynamic} The value of the found parameter.
   */
   async getParameter(parameterKey) {
-    this.logger.info("Finding parameter key '" + parameterKey + "'");
+    this.log.info("Finding parameter key '" + parameterKey + "'");
     const template = await this.getTemplate();
     return template.parameters[parameterKey].defaultValue.value;
   }
@@ -42,7 +42,7 @@ class FirebaseRemoteConfigService {
     parameterGroup,
     parameterKey,
   ) {
-    this.logger.info("Finding parameter key '" + parameterKey + "' in group '" + parameterGroup + "'");
+    this.log.info("Finding parameter key '" + parameterKey + "' in group '" + parameterGroup + "'");
     const template = await this.getTemplate();
 
     return template.parameterGroups[parameterGroup].parameters[

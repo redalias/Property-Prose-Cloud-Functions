@@ -6,12 +6,12 @@ const FirebaseRemoteConfigService = require("./firebase-remote-config-service");
 
 class VertexAiService {
   constructor() {
-    this.logger = new LoggingService(this.constructor.name);
+    this.log = new LoggingService(this.constructor.name);
     this.firebaseRemoteConfigService = new FirebaseRemoteConfigService();
   }
 
   async createPromptForAllCopy(address, features, contactDetails) {
-    this.logger.info('Creating prompt for all copy');
+    this.log.info('Creating prompt for all copy');
 
     let prompt = await this.firebaseRemoteConfigService.getParameter('prompt_all_copy');
 
@@ -33,7 +33,7 @@ class VertexAiService {
     contactDetails,
     maxLength
   ) {
-    this.logger.info('Creating prompt for contextual copy');
+    this.log.info('Creating prompt for contextual copy');
 
     let prompt = await this.firebaseRemoteConfigService.getParameter('prompt_contextual_copy');
 
@@ -58,7 +58,7 @@ class VertexAiService {
   }
 
   async createPromptForSingleCopy(copyElementType, address, features, contactDetails, maxLength) {
-    this.logger.info('Creating prompt for single copy');
+    this.log.info('Creating prompt for single copy');
 
     let prompt = await this.firebaseRemoteConfigService.getParameter('prompt_single_copy');
 
@@ -79,15 +79,15 @@ class VertexAiService {
   }
 
   async sendPromptToGemini(prompt) {
-    this.logger.info('Sending prompt to Gemini:');
-    this.logger.info(prompt);
+    this.log.info('Sending prompt to Gemini:');
+    this.log.info(prompt);
 
     let retries = 0;
     const maxRetries = config.llmRetryCount;
 
     while (retries <= maxRetries) {
       if (retries > 0) {
-        this.logger.warn(`Attempting retry ${retries} of ${maxRetries}...`);
+        this.log.warn(`Attempting retry ${retries} of ${maxRetries}...`);
       }
 
       try {
@@ -103,16 +103,16 @@ class VertexAiService {
         const resp = await generativeModel.generateContent(prompt);
         const response = await resp.response;
 
-        this.logger.info("Response:");
-        this.logger.info(this.logger.formatObject(response));
+        this.log.info("Response:");
+        this.log.info(this.log.formatObject(response));
 
-        this.logger.info("Copy response:");
-        this.logger.info(response.candidates[0].content.parts[0].text);
+        this.log.info("Copy response:");
+        this.log.info(response.candidates[0].content.parts[0].text);
 
         return response.candidates[0].content.parts[0].text;
 
       } catch (error) {
-        this.logger.error(error);
+        this.log.error(error);
 
         retries++;
       }
