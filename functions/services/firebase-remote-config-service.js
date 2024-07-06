@@ -1,7 +1,7 @@
 const firebaseAdmin = require("firebase-admin");
 const LoggingService = require("./logging-service");
 
-class FirebaseRemoteConfig {
+class FirebaseRemoteConfigService {
   constructor() {
     this.logger = new LoggingService(this.constructor.name);
   }
@@ -51,4 +51,4 @@ class FirebaseRemoteConfig {
   }
 }
 
-module.exports = FirebaseRemoteConfig;
+module.exports = FirebaseRemoteConfigService;

@@ -5,7 +5,7 @@ firebaseAdmin.initializeApp();
 const functions = require("firebase-functions/v2");
 
 const LoggingService = require("./services/logging-service");
-const FirebaseRemoteConfig = require("./services/firebase-remote-config");
+const FirebaseRemoteConfigService = require("./services/firebase-remote-config-service");
 const FirestoreService = require("./services/firestore-service");
 const StripeService = require("./services/stripe-service");
 const VertexAiService = require("./services/vertex-ai-service");
@@ -127,8 +127,8 @@ exports.isUserAbleToGenerateCopy = functions.https.onCall(
         return true;
       } else {
         // If the user is not a paying user, then check if they
-        const firebaseRemoteConfig = new FirebaseRemoteConfig();
-        let maximumFreeCopyGenerations = await firebaseRemoteConfig.getParameter('maximum_free_copy_generations');
+        const firebaseRemoteConfigService = new FirebaseRemoteConfigService();
+        let maximumFreeCopyGenerations = await firebaseRemoteConfigService.getParameter('maximum_free_copy_generations');
         let lifetimeCopyGenerations = user['lifetime_copy_generations'];
         let remainingCopyGenerations = maximumFreeCopyGenerations - lifetimeCopyGenerations;
 

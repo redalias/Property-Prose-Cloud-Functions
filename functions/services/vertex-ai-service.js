@@ -2,18 +2,18 @@ const { VertexAI } = require('@google-cloud/vertexai');
 const config = require("../values/config");
 
 const LoggingService = require("./logging-service");
-const FirebaseRemoteConfig = require('./firebase-remote-config');
+const FirebaseRemoteConfigService = require("./firebase-remote-config-service");
 
 class VertexAiService {
   constructor() {
     this.logger = new LoggingService(this.constructor.name);
-    this.firebaseRemoteConfig = new FirebaseRemoteConfig();
+    this.firebaseRemoteConfigService = new FirebaseRemoteConfigService();
   }
 
   async createPromptForAllCopy(address, features, contactDetails) {
     this.logger.info('Creating prompt for all copy');
 
-    let prompt = await this.firebaseRemoteConfig.getParameter('prompt_all_copy');
+    let prompt = await this.firebaseRemoteConfigService.getParameter('prompt_all_copy');
 
     prompt = prompt.replace('${address}', address);
     prompt = prompt.replace('${features}', features);
@@ -35,7 +35,7 @@ class VertexAiService {
   ) {
     this.logger.info('Creating prompt for contextual copy');
 
-    let prompt = await this.firebaseRemoteConfig.getParameter('prompt_contextual_copy');
+    let prompt = await this.firebaseRemoteConfigService.getParameter('prompt_contextual_copy');
 
     prompt = prompt.replace('${copyElementType}', copyElementType);
     prompt = prompt.replace('${action}', action);
@@ -60,7 +60,7 @@ class VertexAiService {
   async createPromptForSingleCopy(copyElementType, address, features, contactDetails, maxLength) {
     this.logger.info('Creating prompt for single copy');
 
-    let prompt = await this.firebaseRemoteConfig.getParameter('prompt_single_copy');
+    let prompt = await this.firebaseRemoteConfigService.getParameter('prompt_single_copy');
 
     prompt = prompt.replace('${copyElementType}', copyElementType);
     prompt = prompt.replace('${address}', address);
