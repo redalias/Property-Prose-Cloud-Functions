@@ -6,7 +6,7 @@ class LoggingService {
      * 
      * @param {string} className The name of the class where the logger is being used.
      */
-    constructor(className) {
+    constructor(className = '') {
         this.className = className;
     }
 
@@ -62,7 +62,16 @@ class LoggingService {
      * @param {object} context (Optional) An object containing additional context data for the log.
      */
     log(level, message, context = {}) {
-        const logLine = `[${level}] [${this.className}] ${message}`;
+        let logLine;
+
+        if (this.className.length === 0) {
+            // The log was called from index.js, which does not have a class name.
+            logLine = `[${level}] ${message}`;
+        } else {
+            // The log was called from index.js, which does not have a class name.
+            logLine = `[${level}] [${this.className}] ${message}`;
+        }
+
 
         // Check if context is an object before formatting
         const depth = 4;

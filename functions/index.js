@@ -6,6 +6,7 @@ firebaseAdmin.initializeApp();
 const firebaseRemoteConfig = require("./services/firebase-remote-config");
 const functions = require("firebase-functions/v2");
 
+const LoggingService = require("./services/logging-service");
 const FirestoreService = require("./services/firestore-service");
 const StripeService = require("./services/stripe-service");
 const VertexAiService = require("./services/vertex-ai-service");
@@ -16,16 +17,18 @@ const VertexAiService = require("./services/vertex-ai-service");
 */
 exports.createStripeCustomerPortalSession = functions.https.onCall(
   async (request, response) => {
+    const logger = new LoggingService();
+
     try {
       const stripeService = new StripeService();
       const portalSession = await stripeService.createCustomerPortalSession(request);
 
-      console.log("Created Stripe customer portal session");
-      console.log(portalSession);
+      logger.info("Created Stripe customer portal session");
+      logger.info(portalSession);
 
       return portalSession;
     } catch (error) {
-      console.error(error);
+      logger.error(error);
 
       response
         .status(500)
@@ -36,16 +39,18 @@ exports.createStripeCustomerPortalSession = functions.https.onCall(
 
 exports.createStripePaymentLink = functions.https.onCall(
   async (request, response) => {
+    const logger = new LoggingService();
+
     try {
       const stripeService = new StripeService();
       const paymentLink = await stripeService.createPaymentLink(request);
 
-      console.log("Created payment link");
-      console.log(paymentLink);
+      logger.info("Created payment link");
+      logger.info(paymentLink);
 
       return paymentLink.url;
     } catch (error) {
-      console.error(error);
+      logger.error(error);
 
       response
         .status(500)
@@ -58,8 +63,10 @@ exports.createStripePaymentLink = functions.https.onCall(
   Called when certain Stripe events are triggered.
 */
 exports.stripeWebhook = functions.https.onRequest(async (request, response) => {
+  const logger = new LoggingService();
+
   try {
-    console.log('Called Stripe webhook');
+    logger.info('Called Stripe webhook');
 
     const stripeService = new StripeService();
     await stripeService.webhook(request);
@@ -67,7 +74,7 @@ exports.stripeWebhook = functions.https.onRequest(async (request, response) => {
     response.status(200).send();
 
   } catch (error) {
-    console.error(error);
+    logger.error(error);
 
     response
       .status(500)
@@ -77,6 +84,8 @@ exports.stripeWebhook = functions.https.onRequest(async (request, response) => {
 
 exports.updateStripeCustomer = functions.https.onCall(
   async (request, response) => {
+    const logger = new LoggingService();
+
     try {
       const stripeService = new StripeService();
       const response = await stripeService.updateCustomer(
@@ -87,12 +96,12 @@ exports.updateStripeCustomer = functions.https.onCall(
         }
       );
 
-      console.log("Updated Stripe customer");
-      console.log(response);
+      logger.info("Updated Stripe customer");
+      logger.info(logger.formatObject(response));
 
       return response;
     } catch (error) {
-      console.error(error);
+      logger.error(error);
 
       response
         .status(500)
@@ -102,10 +111,13 @@ exports.updateStripeCustomer = functions.https.onCall(
 );
 
 exports.isUserAbleToGenerateCopy = functions.https.onCall(
+
   async (request, response) => {
+    const logger = new LoggingService();
+
     try {
-      console.log('isUserAbleToGenerateCopy');
-      console.log(request);
+      logger.info('isUserAbleToGenerateCopy');
+      logger.info(request);
 
       // Fetch user data from Firestore.
       const firestoreService = new FirestoreService();
@@ -129,7 +141,7 @@ exports.isUserAbleToGenerateCopy = functions.https.onCall(
       }
 
     } catch (error) {
-      console.error(error);
+      logger.error(error);
 
       response
         .status(500)
@@ -141,9 +153,11 @@ exports.isUserAbleToGenerateCopy = functions.https.onCall(
 
 exports.generateAllCopy = functions.https.onCall(
   async (request, response) => {
+    const logger = new LoggingService();
+
     try {
-      console.log('generateAllCopy data');
-      console.log(request);
+      logger.info('generateAllCopy data');
+      logger.info(request);
 
       const address = request.data['address'];
       const features = request.data['features'];
@@ -156,11 +170,11 @@ exports.generateAllCopy = functions.https.onCall(
         contactDetails,
       );
 
-      console.log(response);
+      logger.info(logger.formatObject(response));
 
       return response;
     } catch (error) {
-      console.error(error);
+      logger.error(error);
 
       response
         .status(500)
@@ -171,9 +185,11 @@ exports.generateAllCopy = functions.https.onCall(
 
 exports.generateContextualCopy = functions.https.onCall(
   async (request, response) => {
+    const logger = new LoggingService();
+
     try {
-      console.log('generateContextualCopy data');
-      console.log(request);
+      logger.info('generateContextualCopy data');
+      logger.info(request);
 
       const copyElementType = request.data['copy_element_type'];
       const action = request.data['action'];
@@ -196,11 +212,11 @@ exports.generateContextualCopy = functions.https.onCall(
         maxLength
       );
 
-      console.log(response);
+      logger.info(logger.formatObject(response));
 
       return response;
     } catch (error) {
-      console.error(error);
+      logger.error(error);
 
       response
         .status(500)
@@ -212,8 +228,8 @@ exports.generateContextualCopy = functions.https.onCall(
 exports.generateSingleCopy = functions.https.onCall(
   async (request, response) => {
     try {
-      console.log('generateSingleCopy data');
-      console.log(request);
+      logger.info('generateSingleCopy data');
+      logger.info(request);
 
       const copyElementType = request.data['copy_element_type'];
       const address = request.data['address'];
@@ -230,11 +246,11 @@ exports.generateSingleCopy = functions.https.onCall(
         maxLength,
       );
 
-      console.log(response);
+      logger.info(logger.formatObject(response));
 
       return response;
     } catch (error) {
-      console.error(error);
+      logger.error(error);
 
       response
         .status(500)
@@ -246,7 +262,7 @@ exports.generateSingleCopy = functions.https.onCall(
 
 exports.proxyGoogleMapsPlacesAutocomplete = functions.https.onRequest(
   async (request, response) => {
-    console.log('proxyGoogleMapsPlacesAutocomplete');
+    logger.info('proxyGoogleMapsPlacesAutocomplete');
 
     try {
       // Set CORS headers for the response.
@@ -266,8 +282,8 @@ exports.proxyGoogleMapsPlacesAutocomplete = functions.https.onRequest(
       // TODO: uncomment below to use components, once the https://country.is location fetch is setup.
       // var googleMapsRequestUrl = targetUrl + "&key=" + apiKey + "&components=" + components;
 
-      console.log("Google Maps autocomplete request URL: " + googleMapsRequestUrl);
-      console.log(googleMapsRequestUrl);
+      logger.info("Google Maps autocomplete request URL: " + googleMapsRequestUrl);
+      logger.info(googleMapsRequestUrl);
 
       // Execute the authenticated request and return the data.
       const googleMapsResponse = await fetch(googleMapsRequestUrl, {
@@ -282,7 +298,7 @@ exports.proxyGoogleMapsPlacesAutocomplete = functions.https.onRequest(
 
       // return responseData;
     } catch (error) {
-      console.error(error);
+      logger.error(error);
 
       response
         .status(400)
