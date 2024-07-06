@@ -2,140 +2,121 @@ const { VertexAI } = require('@google-cloud/vertexai');
 const config = require("../values/config");
 const firebaseRemoteConfig = require("./firebase-remote-config");
 
-async function createPromptForAllCopy(address, features, contactDetails) {
-  let prompt = await firebaseRemoteConfig.getParameter('prompt_all_copy');
+const LoggingService = require("./logging-service");
 
-  prompt = prompt.replace('${address}', address);
-  prompt = prompt.replace('${features}', features);
-  prompt = prompt.replace('${contactDetails}', contactDetails);
-
-  const response = sendPromptToGemini(prompt);
-  return response;
-}
-
-async function createPromptForContextualCopy(
-  copyElementType,
-  action,
-  existingCopy,
-  existingCopyToReplace,
-  address,
-  features,
-  contactDetails,
-  maxLength
-) {
-  let prompt = await firebaseRemoteConfig.getParameter('prompt_contextual_copy');
-
-  prompt = prompt.replace('${copyElementType}', copyElementType);
-  prompt = prompt.replace('${action}', action);
-  prompt = prompt.replace('${existingCopy}', existingCopy);
-  prompt = prompt.replace('${existingCopyToReplace}', existingCopyToReplace);
-  prompt = prompt.replace('${address}', address);
-  prompt = prompt.replace('${features}', features);
-  prompt = prompt.replace('${contactDetails}', contactDetails);
-
-  if (maxLength == null || maxLength == 0) {
-    // Remove the character length requirement in the prompt.
-    prompt = prompt.replace('Make it a maximum of ${maxLength} characters long.', '');
-  } else {
-    // Update the character length requirement in the prompt.
-    prompt = prompt.replace('${maxLength}', maxLength);
+class VertexAiService {
+  constructor() {
+    this.logger = new LoggingService(this.constructor.name);
   }
 
-  const response = sendPromptToGemini(prompt);
-  return response;
-}
+  async createPromptForAllCopy(address, features, contactDetails) {
+    this.logger.info('Creating prompt for all copy');
 
-async function createPromptForSingleCopy(copyElementType, address, features, contactDetails, maxLength) {
-  let prompt = await firebaseRemoteConfig.getParameter('prompt_single_copy');
+    let prompt = await firebaseRemoteConfig.getParameter('prompt_all_copy');
 
-  prompt = prompt.replace('${copyElementType}', copyElementType);
-  prompt = prompt.replace('${address}', address);
-  prompt = prompt.replace('${features}', features);
-  prompt = prompt.replace('${contactDetails}', contactDetails);
+    prompt = prompt.replace('${address}', address);
+    prompt = prompt.replace('${features}', features);
+    prompt = prompt.replace('${contactDetails}', contactDetails);
 
-  if (maxLength == null || maxLength == 0) {
-    // Remove the character length requirement in the prompt.
-    prompt = prompt.replace('Make it a maximum of ${maxLength} characters long.', '');
-  } else {
-    // Update the character length requirement in the prompt.
-    prompt = prompt.replace('${maxLength}', maxLength);
+    const response = await this.sendPromptToGemini(prompt);
+    return response;
   }
 
-  const response = sendPromptToGemini(prompt);
-  return response;
-}
+  async createPromptForContextualCopy(
+    copyElementType,
+    action,
+    existingCopy,
+    existingCopyToReplace,
+    address,
+    features,
+    contactDetails,
+    maxLength
+  ) {
+    this.logger.info('Creating prompt for contextual copy');
 
-async function sendPromptToGemini(prompt) {
-  console.log('sendPromptToGemini()');
-  console.log('prompt: ' + prompt);
+    let prompt = await firebaseRemoteConfig.getParameter('prompt_contextual_copy');
 
-  let retries = 0;
-  const maxRetries = config.llmRetryCount;
+    prompt = prompt.replace('${copyElementType}', copyElementType);
+    prompt = prompt.replace('${action}', action);
+    prompt = prompt.replace('${existingCopy}', existingCopy);
+    prompt = prompt.replace('${existingCopyToReplace}', existingCopyToReplace);
+    prompt = prompt.replace('${address}', address);
+    prompt = prompt.replace('${features}', features);
+    prompt = prompt.replace('${contactDetails}', contactDetails);
 
-  while (retries <= maxRetries) {
-    if (retries > 0) {
-      console.warn(`Attempting retry ${retries} of ${maxRetries}...`);
+    if (maxLength == null || maxLength == 0) {
+      // Remove the character length requirement in the prompt.
+      prompt = prompt.replace('Make it a maximum of ${maxLength} characters long.', '');
+    } else {
+      // Update the character length requirement in the prompt.
+      prompt = prompt.replace('${maxLength}', maxLength);
     }
 
-    try {
-      const vertexAI = new VertexAI({
-        project: config.googleCloudProjectName,
-        location: config.googleCloudProjectLocation
-      });
+    const response = await this.sendPromptToGemini(prompt);
+    return response;
+  }
 
-      const generativeModel = vertexAI.getGenerativeModel({
-        model: config.llmModel,
-      });
+  async createPromptForSingleCopy(copyElementType, address, features, contactDetails, maxLength) {
+    this.logger.info('Creating prompt for single copy');
 
-      const resp = await generativeModel.generateContent(prompt);
-      const response = await resp.response;
+    let prompt = await firebaseRemoteConfig.getParameter('prompt_single_copy');
 
-      console.log("Response:");
-      console.log(response);
+    prompt = prompt.replace('${copyElementType}', copyElementType);
+    prompt = prompt.replace('${address}', address);
+    prompt = prompt.replace('${features}', features);
+    prompt = prompt.replace('${contactDetails}', contactDetails);
 
-      console.log("Copy response:");
-      console.log(response.candidates[0].content.parts[0].text);
+    if (maxLength == null || maxLength == 0) {
+      // Remove the character length requirement in the prompt.
+      prompt = prompt.replace('Make it a maximum of ${maxLength} characters long.', '');
+    } else {
+      // Update the character length requirement in the prompt.
+    }
 
-      return response.candidates[0].content.parts[0].text;
+    const response = await this.sendPromptToGemini(prompt);
+    return response;
+  }
 
-    } catch (error) {
-      console.error(error);
+  async sendPromptToGemini(prompt) {
+    this.logger.info('Sending prompt to Gemini:');
+    this.logger.info(prompt);
 
-      retries++;
+    let retries = 0;
+    const maxRetries = config.llmRetryCount;
+
+    while (retries <= maxRetries) {
+      if (retries > 0) {
+        this.logger.warn(`Attempting retry ${retries} of ${maxRetries}...`);
+      }
+
+      try {
+        const vertexAI = new VertexAI({
+          project: config.googleCloudProjectName,
+          location: config.googleCloudProjectLocation
+        });
+
+        const generativeModel = vertexAI.getGenerativeModel({
+          model: config.llmModel,
+        });
+
+        const resp = await generativeModel.generateContent(prompt);
+        const response = await resp.response;
+
+        this.logger.info("Response:");
+        this.logger.info(this.logger.formatObject(response));
+
+        this.logger.info("Copy response:");
+        this.logger.info(response.candidates[0].content.parts[0].text);
+
+        return response.candidates[0].content.parts[0].text;
+
+      } catch (error) {
+        this.logger.error(error);
+
+        retries++;
+      }
     }
   }
 }
 
-
-function extractJSONString(text) {
-  try {
-    // Remove backticks.
-    text = text.replaceAll('`', '');
-
-    // Remove the word 'json'.
-    text = text.replaceAll('json', '');
-    text = text.replaceAll('JSON', '');
-
-    // Trim any leading or trailing whitespace.
-    text = text.trim();
-
-    const startIndex = text.indexOf("{");
-    const endIndex = text.lastIndexOf("}");
-
-    if (startIndex !== -1 && endIndex !== -1) {
-      const jsonString = text.substring(startIndex, endIndex + 1);
-      return jsonString;
-    }
-
-    // This should never be reached.
-    return null;
-  } catch (error) {
-    return null;
-  }
-}
-
-module.exports = {
-  createPromptForAllCopy: createPromptForAllCopy,
-  createPromptForContextualCopy: createPromptForContextualCopy,
-  createPromptForSingleCopy: createPromptForSingleCopy,
-};
+module.exports = VertexAiService;

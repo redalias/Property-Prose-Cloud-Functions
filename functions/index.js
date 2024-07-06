@@ -7,7 +7,7 @@ const firebaseRemoteConfig = require("./services/firebase-remote-config");
 const firestoreService = require("./services/firestore-service");
 const functions = require("firebase-functions/v2");
 const stripeService = require("./services/stripe-service");
-const vertexAiService = require("./services/vertex-ai-service");
+const VertexAiService = require("./services/vertex-ai-service");
 
 /*
   Creates a session of the Stripe Customer Portal.
@@ -143,6 +143,7 @@ exports.generateAllCopy = functions.https.onCall(
       const features = request.data['features'];
       const contactDetails = request.data['contact_details'];
 
+      const vertexAiService = new VertexAiService();
       const response = await vertexAiService.createPromptForAllCopy(
         address,
         features,
@@ -177,6 +178,7 @@ exports.generateContextualCopy = functions.https.onCall(
       const contactDetails = request.data['contact_details'];
       const maxLength = request.data['max_length'];
 
+      const vertexAiService = new VertexAiService();
       const response = await vertexAiService.createPromptForContextualCopy(
         copyElementType,
         action,
@@ -213,6 +215,7 @@ exports.generateSingleCopy = functions.https.onCall(
       const contactDetails = request.data['contact_details'];
       const maxLength = request.data['max_length'];
 
+      const vertexAiService = new VertexAiService();
       const response = await vertexAiService.createPromptForSingleCopy(
         copyElementType,
         address,
