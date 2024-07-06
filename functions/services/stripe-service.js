@@ -1,9 +1,9 @@
 const config = require("../values/config");
 const firebaseAdmin = require("firebase-admin");
 const firebaseRemoteConfig = require("./firebase-remote-config");
-const firestoreService = require("./firestore-service");
 const stripeEvents = require("../values/stripe-events");
 
+const FirestoreService = require("./firestore-service");
 const LoggingService = require("./logging-service");
 
 class StripeService {
@@ -91,6 +91,7 @@ class StripeService {
     const data = event.data.object;
 
     // Update the user's subscription in Firestore.
+    const firestoreService = new FirestoreService();
     await firestoreService.updateUser(
       data.metadata.firebase_user_id,
       {
@@ -118,6 +119,8 @@ class StripeService {
 
   async updateCustomerSubscription(event) {
     this.logger.info("Updating customer subscription");
+
+    const firestoreService = new FirestoreService();
 
     const cancelAtPeriodEndBefore = event.data.previous_attributes.cancel_at_period_end;
     const cancelAtPeriodEndAfter = event.data.object.cancel_at_period_end;
@@ -201,6 +204,7 @@ class StripeService {
     const customer = await getCustomer(data.customer);
 
     // Update the user's subscription status in Firebase.
+    const firestoreService = new FirestoreService();
     await firestoreService.updateUser(
       customer.metadata.firebase_user_id,
       {
@@ -254,6 +258,7 @@ class StripeService {
     this.logger.info(event);
 
     // Save the Stripe event to Firestore.
+    const firestoreService = new FirestoreService();
     await firestoreService.addStripeEvent(event);
 
     // Check which Stripe events can be handled by this webhoook.

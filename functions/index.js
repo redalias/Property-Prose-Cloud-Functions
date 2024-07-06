@@ -4,8 +4,9 @@ firebaseAdmin.initializeApp();
 
 // const config = require("./values/config");
 const firebaseRemoteConfig = require("./services/firebase-remote-config");
-const firestoreService = require("./services/firestore-service");
 const functions = require("firebase-functions/v2");
+
+const FirestoreService = require("./services/firestore-service");
 const StripeService = require("./services/stripe-service");
 const VertexAiService = require("./services/vertex-ai-service");
 
@@ -107,6 +108,7 @@ exports.isUserAbleToGenerateCopy = functions.https.onCall(
       console.log(request);
 
       // Fetch user data from Firestore.
+      const firestoreService = new FirestoreService();
       let user = firestoreService.user(request.data['address']);
       let isPaid = user['is_paid'];
 
