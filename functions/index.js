@@ -2,11 +2,10 @@
 const firebaseAdmin = require("firebase-admin");
 firebaseAdmin.initializeApp();
 
-// const config = require("./values/config");
-const firebaseRemoteConfig = require("./services/firebase-remote-config");
 const functions = require("firebase-functions/v2");
 
 const LoggingService = require("./services/logging-service");
+const FirebaseRemoteConfig = require("./services/firebase-remote-config");
 const FirestoreService = require("./services/firestore-service");
 const StripeService = require("./services/stripe-service");
 const VertexAiService = require("./services/vertex-ai-service");
@@ -17,7 +16,7 @@ const VertexAiService = require("./services/vertex-ai-service");
 */
 exports.createStripeCustomerPortalSession = functions.https.onCall(
   async (request, response) => {
-    const logger = new LoggingService();
+    const logger = new LoggingService('MAIN');
 
     try {
       const stripeService = new StripeService();
@@ -39,7 +38,7 @@ exports.createStripeCustomerPortalSession = functions.https.onCall(
 
 exports.createStripePaymentLink = functions.https.onCall(
   async (request, response) => {
-    const logger = new LoggingService();
+    const logger = new LoggingService('MAIN');
 
     try {
       const stripeService = new StripeService();
@@ -63,7 +62,7 @@ exports.createStripePaymentLink = functions.https.onCall(
   Called when certain Stripe events are triggered.
 */
 exports.stripeWebhook = functions.https.onRequest(async (request, response) => {
-  const logger = new LoggingService();
+  const logger = new LoggingService('MAIN');
 
   try {
     logger.info('Called Stripe webhook');
@@ -84,7 +83,7 @@ exports.stripeWebhook = functions.https.onRequest(async (request, response) => {
 
 exports.updateStripeCustomer = functions.https.onCall(
   async (request, response) => {
-    const logger = new LoggingService();
+    const logger = new LoggingService('MAIN');
 
     try {
       const stripeService = new StripeService();
@@ -111,13 +110,12 @@ exports.updateStripeCustomer = functions.https.onCall(
 );
 
 exports.isUserAbleToGenerateCopy = functions.https.onCall(
-
   async (request, response) => {
-    const logger = new LoggingService();
+    const logger = new LoggingService('MAIN');
 
     try {
       logger.info('isUserAbleToGenerateCopy');
-      logger.info(request);
+      logger.info(logger.formatObject(request));
 
       // Fetch user data from Firestore.
       const firestoreService = new FirestoreService();
@@ -129,6 +127,7 @@ exports.isUserAbleToGenerateCopy = functions.https.onCall(
         return true;
       } else {
         // If the user is not a paying user, then check if they
+        const firebaseRemoteConfig = new FirebaseRemoteConfig();
         let maximumFreeCopyGenerations = await firebaseRemoteConfig.getParameter('maximum_free_copy_generations');
         let lifetimeCopyGenerations = user['lifetime_copy_generations'];
         let remainingCopyGenerations = maximumFreeCopyGenerations - lifetimeCopyGenerations;
@@ -153,11 +152,11 @@ exports.isUserAbleToGenerateCopy = functions.https.onCall(
 
 exports.generateAllCopy = functions.https.onCall(
   async (request, response) => {
-    const logger = new LoggingService();
+    const logger = new LoggingService('MAIN');
 
     try {
       logger.info('generateAllCopy data');
-      logger.info(request);
+      logger.info(logger.formatObject(request));
 
       const address = request.data['address'];
       const features = request.data['features'];
@@ -185,11 +184,11 @@ exports.generateAllCopy = functions.https.onCall(
 
 exports.generateContextualCopy = functions.https.onCall(
   async (request, response) => {
-    const logger = new LoggingService();
+    const logger = new LoggingService('MAIN');
 
     try {
       logger.info('generateContextualCopy data');
-      logger.info(request);
+      logger.info(logger.formatObject(request));
 
       const copyElementType = request.data['copy_element_type'];
       const action = request.data['action'];
@@ -227,9 +226,11 @@ exports.generateContextualCopy = functions.https.onCall(
 
 exports.generateSingleCopy = functions.https.onCall(
   async (request, response) => {
+    const logger = new LoggingService('MAIN');
+
     try {
       logger.info('generateSingleCopy data');
-      logger.info(request);
+      logger.info(logger.formatObject(request));
 
       const copyElementType = request.data['copy_element_type'];
       const address = request.data['address'];
@@ -262,7 +263,7 @@ exports.generateSingleCopy = functions.https.onCall(
 
 exports.proxyGoogleMapsPlacesAutocomplete = functions.https.onRequest(
   async (request, response) => {
-    logger.info('proxyGoogleMapsPlacesAutocomplete');
+    const logger = new LoggingService('MAIN');
 
     try {
       // Set CORS headers for the response.

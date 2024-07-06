@@ -1,14 +1,15 @@
 const config = require("../values/config");
 const firebaseAdmin = require("firebase-admin");
-const firebaseRemoteConfig = require("./firebase-remote-config");
 const stripeEvents = require("../values/stripe-events");
 
+const FirebaseRemoteConfig = require("./firebase-remote-config");
 const FirestoreService = require("./firestore-service");
 const LoggingService = require("./logging-service");
 
 class StripeService {
   constructor() {
     this.logger = new LoggingService(this.constructor.name);
+    this.firebaseRemoteConfig = new FirebaseRemoteConfig();
     this.firestoreService = new FirestoreService();
   }
 
@@ -18,19 +19,19 @@ class StripeService {
       const remoteConfigParameterName = config.stripeRemoteConfigKeys.remoteConfigParameterName;
 
       const stripeRemoteConfig = {
-        paymentSuccessfulText: await firebaseRemoteConfig.getParameterFromGroup(
+        paymentSuccessfulText: await this.firebaseRemoteConfig.getParameterFromGroup(
           remoteConfigParameterName,
           config.stripeRemoteConfigKeys.paymentSuccessfulText,
         ),
-        priceId: await firebaseRemoteConfig.getParameterFromGroup(
+        priceId: await this.firebaseRemoteConfig.getParameterFromGroup(
           remoteConfigParameterName,
           config.stripeRemoteConfigKeys.priceId,
         ),
-        secretKey: await firebaseRemoteConfig.getParameterFromGroup(
+        secretKey: await this.firebaseRemoteConfig.getParameterFromGroup(
           remoteConfigParameterName,
           config.stripeRemoteConfigKeys.secretKey,
         ),
-        webhookSecret: await firebaseRemoteConfig.getParameterFromGroup(
+        webhookSecret: await this.firebaseRemoteConfig.getParameterFromGroup(
           remoteConfigParameterName,
           config.stripeRemoteConfigKeys.webhookSecret,
         ),
