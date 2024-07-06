@@ -35,11 +35,12 @@ class StripeService {
         ),
       };
 
-      console.log(stripeRemoteConfig);
+      this.logger.info('Remote Config Strings:')
+      this.logger.info(this.logger.formatObject(stripeRemoteConfig));
 
       return stripeRemoteConfig;
     } catch (error) {
-      console.error(
+      this.logger.error(
         "Error fetching Stripe configuration from Remote Config:",
         error,
       );
@@ -85,7 +86,7 @@ class StripeService {
   }
 
   async upgradeCustomerSubscription(event) {
-    console.log("Upgrading customer subscription");
+    this.logger.info("Upgrading customer subscription");
 
     const data = event.data.object;
 
@@ -116,7 +117,7 @@ class StripeService {
   }
 
   async updateCustomerSubscription(event) {
-    console.log("Updating customer subscription");
+    this.logger.info("Updating customer subscription");
 
     const cancelAtPeriodEndBefore = event.data.previous_attributes.cancel_at_period_end;
     const cancelAtPeriodEndAfter = event.data.object.cancel_at_period_end;
@@ -131,7 +132,7 @@ class StripeService {
       // The customer has set to cancel their subscription at the end of
       // their current billing period. Update the user's subscription in
       // Firestore.
-      console.log("Cancelling customer subscription at end of billing period");
+      this.logger.info("Cancelling customer subscription at end of billing period");
 
       // Fetch the customer from Stripe and get their Firebase user ID.
       const customer = await getCustomer(event.data.object.customer);
@@ -150,7 +151,7 @@ class StripeService {
     } else if (cancelAtPeriodEndBefore == true && cancelAtPeriodEndAfter == false) {
       // The customer has reactivated their subscription after previously
       // setting it to cancel.
-      console.log("Reactivating customer subscription");
+      this.logger.info("Reactivating customer subscription");
 
       // Fetch the customer from Stripe and get their Firebase user ID.
       const customer = await getCustomer(event.data.object.customer);
@@ -171,7 +172,7 @@ class StripeService {
     } else if ((currentPeriodStartBefore != currentPeriodStartAfter) &&
       (currentPeriodEndBefore != currentPeriodEndAfter)) {
       // The customer has renewed their subscription for another billing period.
-      console.log("Renewing customer subscription for another billing period");
+      this.logger.info("Renewing customer subscription for another billing period");
 
       // Fetch the customer from Stripe and get their Firebase user ID.
       const customer = await getCustomer(event.data.object.customer);
@@ -192,7 +193,7 @@ class StripeService {
   }
 
   async downgradeCustomerSubscription(event) {
-    console.log("Downgrading customer subscription");
+    this.logger.info("Downgrading customer subscription");
 
     const data = event.data.object;
 
@@ -209,7 +210,7 @@ class StripeService {
   }
 
   async getCustomer(customerId) {
-    console.log("Getting customer " + customerId + " from Stripe");
+    this.logger.info("Getting customer " + customerId + " from Stripe");
 
     // Initialise Stripe.
     const stripeConfig = await this.createRemoteConfigStrings();
@@ -218,14 +219,14 @@ class StripeService {
     // Get the customer.
     const customer = await stripe.customers.retrieve(customerId);
 
-    console.log('Customer:');
-    console.log(customer);
+    this.logger.info('Customer:');
+    this.logger.info(customer);
 
     return customer;
   }
 
   async updateCustomer(customerId, data) {
-    console.log("Updating customer details");
+    this.logger.info("Updating customer details");
 
     // Initialise Stripe.
     const stripeConfig = await this.createRemoteConfigStrings();
@@ -249,8 +250,8 @@ class StripeService {
       stripeConfig.webhookSecret,
     );
 
-    console.log("Event:");
-    console.log(event);
+    this.logger.info("Event:");
+    this.logger.info(event);
 
     // Save the Stripe event to Firestore.
     await firestoreService.addStripeEvent(event);
@@ -258,7 +259,7 @@ class StripeService {
     // Check which Stripe events can be handled by this webhoook.
     const supportedStripeEvents = Object.values(stripeEvents);
     const isSupportedStripeEvent = supportedStripeEvents.indexOf(event.type) > -1;
-    console.log("Webhook supports this Stripe event? " + isSupportedStripeEvent);
+    this.logger.info("Webhook supports this Stripe event? " + isSupportedStripeEvent);
 
     if (isSupportedStripeEvent) {
       switch (event.type) {
@@ -279,7 +280,7 @@ class StripeService {
           break;
       }
 
-      console.log("Webhook handled successfully for event " + event.id);
+      this.logger.info("Webhook handled successfully for event " + event.id);
     } else {
       throw new Error(`Unhandled event type: ${event.type}`);
     }
