@@ -4,287 +4,286 @@ const firebaseRemoteConfig = require("./firebase-remote-config");
 const firestoreService = require("./firestore-service");
 const stripeEvents = require("../values/stripe-events");
 
-// Fetch Stripe keys from Firebase Remote Config.
-const createRemoteConfigStrings = async () => {
-  try {
-    const remoteConfigParameterName = config.stripeRemoteConfigKeys.remoteConfigParameterName;
+const LoggingService = require("./logging-service");
 
-    const stripeRemoteConfig = {
-      paymentSuccessfulText: await firebaseRemoteConfig.getParameterFromGroup(
-        remoteConfigParameterName,
-        config.stripeRemoteConfigKeys.paymentSuccessfulText,
-      ),
-      priceId: await firebaseRemoteConfig.getParameterFromGroup(
-        remoteConfigParameterName,
-        config.stripeRemoteConfigKeys.priceId,
-      ),
-      secretKey: await firebaseRemoteConfig.getParameterFromGroup(
-        remoteConfigParameterName,
-        config.stripeRemoteConfigKeys.secretKey,
-      ),
-      webhookSecret: await firebaseRemoteConfig.getParameterFromGroup(
-        remoteConfigParameterName,
-        config.stripeRemoteConfigKeys.webhookSecret,
-      ),
-    };
-
-    console.log(stripeRemoteConfig);
-
-    return stripeRemoteConfig;
-  } catch (error) {
-    console.error(
-      "Error fetching Stripe configuration from Remote Config:",
-      error,
-    );
-    throw new Error("Failed to retrieve Stripe configuration");
+class StripeService {
+  constructor() {
+    this.logger = new LoggingService(this.constructor.name);
   }
-};
 
-async function createCustomerPortalSession(request) {
-  // Initialise Stripe.
-  const stripeConfig = await createRemoteConfigStrings();
-  const stripe = require("stripe")(stripeConfig.secretKey);
+  // Fetch Stripe keys from Firebase Remote Config.
+  async createRemoteConfigStrings() {
+    try {
+      const remoteConfigParameterName = config.stripeRemoteConfigKeys.remoteConfigParameterName;
 
-  // Call the Stripe API to create a new customer portal session.
-  return await stripe.billingPortal.sessions.create({
-    customer: request.data.stripe_customer_id,
-  });
-}
+      const stripeRemoteConfig = {
+        paymentSuccessfulText: await firebaseRemoteConfig.getParameterFromGroup(
+          remoteConfigParameterName,
+          config.stripeRemoteConfigKeys.paymentSuccessfulText,
+        ),
+        priceId: await firebaseRemoteConfig.getParameterFromGroup(
+          remoteConfigParameterName,
+          config.stripeRemoteConfigKeys.priceId,
+        ),
+        secretKey: await firebaseRemoteConfig.getParameterFromGroup(
+          remoteConfigParameterName,
+          config.stripeRemoteConfigKeys.secretKey,
+        ),
+        webhookSecret: await firebaseRemoteConfig.getParameterFromGroup(
+          remoteConfigParameterName,
+          config.stripeRemoteConfigKeys.webhookSecret,
+        ),
+      };
 
-async function createPaymentLink(request) {
-  // Initialise Stripe.
-  const stripeConfig = await createRemoteConfigStrings();
-  const stripe = require("stripe")(stripeConfig.secretKey);
+      console.log(stripeRemoteConfig);
 
-  // Call the Stripe API to create a new payment link.
-  return await stripe.paymentLinks.create({
-    allow_promotion_codes: true,
-    after_completion: {
-      hosted_confirmation: {
-        custom_message: stripeConfig.paymentSuccessfulText,
+      return stripeRemoteConfig;
+    } catch (error) {
+      console.error(
+        "Error fetching Stripe configuration from Remote Config:",
+        error,
+      );
+      throw new Error("Failed to retrieve Stripe configuration");
+    }
+  }
+
+  async createCustomerPortalSession(request) {
+    // Initialise Stripe.
+    const stripeConfig = await this.createRemoteConfigStrings();
+    const stripe = require("stripe")(stripeConfig.secretKey);
+
+    // Call the Stripe API to create a new customer portal session.
+    return await stripe.billingPortal.sessions.create({
+      customer: request.data.stripe_customer_id,
+    });
+  }
+
+  async createPaymentLink(request) {
+    // Initialise Stripe.
+    const stripeConfig = await this.createRemoteConfigStrings();
+    const stripe = require("stripe")(stripeConfig.secretKey);
+
+    // Call the Stripe API to create a new payment link.
+    return await stripe.paymentLinks.create({
+      allow_promotion_codes: true,
+      after_completion: {
+        hosted_confirmation: {
+          custom_message: stripeConfig.paymentSuccessfulText,
+        },
+        type: "hosted_confirmation",
       },
-      type: "hosted_confirmation",
-    },
-    line_items: [
-      {
-        price: stripeConfig.priceId,
-        quantity: 1,
-      },
-    ],
-    metadata: {
-      firebase_user_id: request.data.firebase_user_id,
-    },
-  });
-}
-
-async function upgradeCustomerSubscription(event) {
-  console.log("Upgrading customer subscription");
-
-  const data = event.data.object;
-
-  // Update the user's subscription in Firestore.
-  await firestoreService.updateUser(
-    data.metadata.firebase_user_id,
-    {
-      subscription: {
-        date_upgraded: firebaseAdmin.firestore.Timestamp.now(),
-        latest_invoice_id: data.id,
-        status: "Pro",
-        stripe_customer_id: data.customer,
-        subscription_id: data.subscription,
-      }
-    },
-  );
-
-  // Add the user's Firebase ID as metadata in their Stripe customer
-  // profile.
-  await updateCustomer(
-    data.customer,
-    {
+      line_items: [
+        {
+          price: stripeConfig.priceId,
+          quantity: 1,
+        },
+      ],
       metadata: {
-        firebase_user_id: data.client_reference_id,
+        firebase_user_id: request.data.firebase_user_id,
+      },
+    });
+  }
+
+  async upgradeCustomerSubscription(event) {
+    console.log("Upgrading customer subscription");
+
+    const data = event.data.object;
+
+    // Update the user's subscription in Firestore.
+    await firestoreService.updateUser(
+      data.metadata.firebase_user_id,
+      {
+        subscription: {
+          date_upgraded: firebaseAdmin.firestore.Timestamp.now(),
+          latest_invoice_id: data.id,
+          status: "Pro",
+          stripe_customer_id: data.customer,
+          subscription_id: data.subscription,
+        }
+      },
+    );
+
+    // Add the user's Firebase ID as metadata in their Stripe customer
+    // profile.
+    await updateCustomer(
+      data.customer,
+      {
+        metadata: {
+          firebase_user_id: data.client_reference_id,
+        }
       }
+    );
+  }
+
+  async updateCustomerSubscription(event) {
+    console.log("Updating customer subscription");
+
+    const cancelAtPeriodEndBefore = event.data.previous_attributes.cancel_at_period_end;
+    const cancelAtPeriodEndAfter = event.data.object.cancel_at_period_end;
+
+    const currentPeriodStartBefore = event.data.previous_attributes.current_period_start;
+    const currentPeriodStartAfter = event.data.object.current_period_start;
+
+    const currentPeriodEndBefore = event.data.previous_attributes.current_period_end;
+    const currentPeriodEndAfter = event.data.object.current_period_end;
+
+    if (cancelAtPeriodEndBefore == false && cancelAtPeriodEndAfter == true) {
+      // The customer has set to cancel their subscription at the end of
+      // their current billing period. Update the user's subscription in
+      // Firestore.
+      console.log("Cancelling customer subscription at end of billing period");
+
+      // Fetch the customer from Stripe and get their Firebase user ID.
+      const customer = await getCustomer(event.data.object.customer);
+
+      // Update the user's subscription in Firestore.
+      await firestoreService.updateUser(
+        customer.metadata.firebase_user_id,
+        {
+          subscription: {
+            date_cancelled: firebaseAdmin.firestore.Timestamp.now(),
+            status: "Pro (pending downgrade)",
+            stripe_customer_id: event.data.object.customer,
+          }
+        },
+      );
+    } else if (cancelAtPeriodEndBefore == true && cancelAtPeriodEndAfter == false) {
+      // The customer has reactivated their subscription after previously
+      // setting it to cancel.
+      console.log("Reactivating customer subscription");
+
+      // Fetch the customer from Stripe and get their Firebase user ID.
+      const customer = await getCustomer(event.data.object.customer);
+
+      // Update the user's subscription in Firestore.
+      await firestoreService.updateUser(
+        customer.metadata.firebase_user_id,
+        {
+          subscription: {
+            date_reactivated: firebaseAdmin.firestore.Timestamp.now(),
+            status: "Pro",
+            stripe_customer_id: event.data.object.customer,
+            subscription_id: event.data.object.id,
+          }
+        },
+      );
+
+    } else if ((currentPeriodStartBefore != currentPeriodStartAfter) &&
+      (currentPeriodEndBefore != currentPeriodEndAfter)) {
+      // The customer has renewed their subscription for another billing period.
+      console.log("Renewing customer subscription for another billing period");
+
+      // Fetch the customer from Stripe and get their Firebase user ID.
+      const customer = await getCustomer(event.data.object.customer);
+
+      // Update the user's subscription in Firestore.
+      await firestoreService.updateUser(
+        customer.metadata.firebase_user_id,
+        {
+          subscription: {
+            date_renewed: firebaseAdmin.firestore.Timestamp.now(),
+            latest_invoice_id: event.data.object.id,
+            status: "Pro",
+            subscription_id: event.data.object.subscription,
+          }
+        },
+      );
     }
-  );
-}
+  }
 
-async function updateCustomerSubscription(event) {
-  console.log("Updating customer subscription");
+  async downgradeCustomerSubscription(event) {
+    console.log("Downgrading customer subscription");
 
-  const cancelAtPeriodEndBefore = event.data.previous_attributes.cancel_at_period_end;
-  const cancelAtPeriodEndAfter = event.data.object.cancel_at_period_end;
-
-  const currentPeriodStartBefore = event.data.previous_attributes.current_period_start;
-  const currentPeriodStartAfter = event.data.object.current_period_start;
-
-  const currentPeriodEndBefore = event.data.previous_attributes.current_period_end;
-  const currentPeriodEndAfter = event.data.object.current_period_end;
-
-  if (cancelAtPeriodEndBefore == false && cancelAtPeriodEndAfter == true) {
-    // The customer has set to cancel their subscription at the end of
-    // their current billing period. Update the user's subscription in
-    // Firestore.
-    console.log("Cancelling customer subscription at end of billing period");
+    const data = event.data.object;
 
     // Fetch the customer from Stripe and get their Firebase user ID.
-    const customer = await getCustomer(event.data.object.customer);
+    const customer = await getCustomer(data.customer);
 
-    // Update the user's subscription in Firestore.
+    // Update the user's subscription status in Firebase.
     await firestoreService.updateUser(
       customer.metadata.firebase_user_id,
       {
-        subscription: {
-          date_cancelled: firebaseAdmin.firestore.Timestamp.now(),
-          status: "Pro (pending downgrade)",
-          stripe_customer_id: event.data.object.customer,
-        }
-      },
-    );
-  } else if (cancelAtPeriodEndBefore == true && cancelAtPeriodEndAfter == false) {
-    // The customer has reactivated their subscription after previously
-    // setting it to cancel.
-    console.log("Reactivating customer subscription");
-
-    // Fetch the customer from Stripe and get their Firebase user ID.
-    const customer = await getCustomer(event.data.object.customer);
-
-    // Update the user's subscription in Firestore.
-    await firestoreService.updateUser(
-      customer.metadata.firebase_user_id,
-      {
-        subscription: {
-          date_reactivated: firebaseAdmin.firestore.Timestamp.now(),
-          status: "Pro",
-          stripe_customer_id: event.data.object.customer,
-          subscription_id: event.data.object.id,
-        }
-      },
-    );
-
-  } else if ((currentPeriodStartBefore != currentPeriodStartAfter) &&
-    (currentPeriodEndBefore != currentPeriodEndAfter)) {
-    // The customer has renewed their subscription for another billing period.
-    console.log("Renewing customer subscription for another billing period");
-
-    // Fetch the customer from Stripe and get their Firebase user ID.
-    const customer = await getCustomer(event.data.object.customer);
-
-    // Update the user's subscription in Firestore.
-    await firestoreService.updateUser(
-      customer.metadata.firebase_user_id,
-      {
-        subscription: {
-          date_renewed: firebaseAdmin.firestore.Timestamp.now(),
-          latest_invoice_id: event.data.object.id,
-          status: "Pro",
-          subscription_id: event.data.object.subscription,
-        }
+        "subscription.status": "Free",
       },
     );
   }
-}
 
-async function downgradeCustomerSubscription(event) {
-  console.log("Downgrading customer subscription");
+  async getCustomer(customerId) {
+    console.log("Getting customer " + customerId + " from Stripe");
 
-  const data = event.data.object;
+    // Initialise Stripe.
+    const stripeConfig = await this.createRemoteConfigStrings();
+    const stripe = require("stripe")(stripeConfig.secretKey);
 
-  // Fetch the customer from Stripe and get their Firebase user ID.
-  const customer = await getCustomer(data.customer);
+    // Get the customer.
+    const customer = await stripe.customers.retrieve(customerId);
 
-  // Update the user's subscription status in Firebase.
-  await firestoreService.updateUser(
-    customer.metadata.firebase_user_id,
-    {
-      "subscription.status": "Free",
-    },
-  );
-}
+    console.log('Customer:');
+    console.log(customer);
 
-async function getCustomer(customerId) {
-  console.log("Getting customer " + customerId + " from Stripe");
+    return customer;
+  }
 
-  // Initialise Stripe.
-  const stripeConfig = await createRemoteConfigStrings();
-  const stripe = require("stripe")(stripeConfig.secretKey);
+  async updateCustomer(customerId, data) {
+    console.log("Updating customer details");
 
-  // Get the customer.
-  const customer = await stripe.customers.retrieve(customerId);
+    // Initialise Stripe.
+    const stripeConfig = await this.createRemoteConfigStrings();
+    const stripe = require("stripe")(stripeConfig.secretKey);
 
-  console.log('Customer:');
-  console.log(customer);
+    // Call the Stripe API to update the customer's details.
+    return await stripe.customers.update(
+      customerId,
+      data,
+    );
+  }
 
-  return customer;
-}
+  async webhook(request) {
+    // Initialise Stripe.
+    const stripeConfig = await this.createRemoteConfigStrings();
+    const stripe = require("stripe")(stripeConfig.secretKey);
 
-async function updateCustomer(customerId, data) {
-  console.log("Updating customer details");
+    const event = stripe.webhooks.constructEvent(
+      request.rawBody,
+      request.headers["stripe-signature"],
+      stripeConfig.webhookSecret,
+    );
 
-  // Initialise Stripe.
-  const stripeConfig = await createRemoteConfigStrings();
-  const stripe = require("stripe")(stripeConfig.secretKey);
+    console.log("Event:");
+    console.log(event);
 
-  // Call the Stripe API to update the customer's details.
-  return await stripe.customers.update(
-    customerId,
-    data,
-  );
-}
+    // Save the Stripe event to Firestore.
+    await firestoreService.addStripeEvent(event);
 
-async function webhook(request) {
-  // Initialise Stripe.
-  const stripeConfig = await createRemoteConfigStrings();
-  const stripe = require("stripe")(stripeConfig.secretKey);
+    // Check which Stripe events can be handled by this webhoook.
+    const supportedStripeEvents = Object.values(stripeEvents);
+    const isSupportedStripeEvent = supportedStripeEvents.indexOf(event.type) > -1;
+    console.log("Webhook supports this Stripe event? " + isSupportedStripeEvent);
 
-  const event = stripe.webhooks.constructEvent(
-    request.rawBody,
-    request.headers["stripe-signature"],
-    stripeConfig.webhookSecret,
-  );
+    if (isSupportedStripeEvent) {
+      switch (event.type) {
+        case stripeEvents.checkoutSessionCompleted:
+          // The customer upgraded from Free to Pro.
+          await upgradeCustomerSubscription(event);
+          break;
 
-  console.log("Event:");
-  console.log(event);
+        case stripeEvents.customerSubscriptionUpdated:
+          // The customer updated their subscription. For example, they renewed,
+          // canceled, or reactivated it.
+          await updateCustomerSubscription(event);
+          break;
 
-  // Save the Stripe event to Firestore.
-  await firestoreService.addStripeEvent(event);
+        case stripeEvents.customerSubscriptionDeleted:
+          // The customer's pending subscription downgrade has taken effect.
+          await downgradeCustomerSubscription(event);
+          break;
+      }
 
-  // Check which Stripe events can be handled by this webhoook.
-  const supportedStripeEvents = Object.values(stripeEvents);
-  const isSupportedStripeEvent = supportedStripeEvents.indexOf(event.type) > -1;
-  console.log("Webhook supports this Stripe event? " + isSupportedStripeEvent);
-
-  if (isSupportedStripeEvent) {
-    switch (event.type) {
-      case stripeEvents.checkoutSessionCompleted:
-        // The customer upgraded from Free to Pro.
-        await upgradeCustomerSubscription(event);
-        break;
-
-      case stripeEvents.customerSubscriptionUpdated:
-        // The customer updated their subscription. For example, they renewed,
-        // canceled, or reactivated it.
-        await updateCustomerSubscription(event);
-        break;
-
-      case stripeEvents.customerSubscriptionDeleted:
-        // The customer's pending subscription downgrade has taken effect.
-        await downgradeCustomerSubscription(event);
-        break;
+      console.log("Webhook handled successfully for event " + event.id);
+    } else {
+      throw new Error(`Unhandled event type: ${event.type}`);
     }
-
-    console.log("Webhook handled successfully for event " + event.id);
-  } else {
-    throw new Error(`Unhandled event type: ${event.type}`);
   }
 }
 
-module.exports = {
-  createPaymentLink,
-  createCustomerPortalSession,
-  createRemoteConfigStrings,
-  upgradeCustomerSubscription,
-  updateCustomerSubscription,
-  downgradeCustomerSubscription,
-  updateCustomer,
-  webhook,
-};
+module.exports = StripeService;

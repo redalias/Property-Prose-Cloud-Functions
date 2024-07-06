@@ -6,7 +6,7 @@ firebaseAdmin.initializeApp();
 const firebaseRemoteConfig = require("./services/firebase-remote-config");
 const firestoreService = require("./services/firestore-service");
 const functions = require("firebase-functions/v2");
-const stripeService = require("./services/stripe-service");
+const StripeService = require("./services/stripe-service");
 const VertexAiService = require("./services/vertex-ai-service");
 
 /*
@@ -16,6 +16,7 @@ const VertexAiService = require("./services/vertex-ai-service");
 exports.createStripeCustomerPortalSession = functions.https.onCall(
   async (request, response) => {
     try {
+      const stripeService = new StripeService();
       const portalSession = await stripeService.createCustomerPortalSession(request);
 
       console.log("Created Stripe customer portal session");
@@ -35,6 +36,7 @@ exports.createStripeCustomerPortalSession = functions.https.onCall(
 exports.createStripePaymentLink = functions.https.onCall(
   async (request, response) => {
     try {
+      const stripeService = new StripeService();
       const paymentLink = await stripeService.createPaymentLink(request);
 
       console.log("Created payment link");
@@ -58,6 +60,7 @@ exports.stripeWebhook = functions.https.onRequest(async (request, response) => {
   try {
     console.log('Called Stripe webhook');
 
+    const stripeService = new StripeService();
     await stripeService.webhook(request);
 
     response.status(200).send();
@@ -74,6 +77,7 @@ exports.stripeWebhook = functions.https.onRequest(async (request, response) => {
 exports.updateStripeCustomer = functions.https.onCall(
   async (request, response) => {
     try {
+      const stripeService = new StripeService();
       const response = await stripeService.updateCustomer(
         request.data.stripe_customer_id,
         {
