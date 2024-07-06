@@ -1,5 +1,3 @@
-const path = require('path');
-
 class LoggingService {
     /**
      * Creates a new LoggingService instance with the provided class name.
