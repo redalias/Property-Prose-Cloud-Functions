@@ -9,6 +9,7 @@ const LoggingService = require("./logging-service");
 class StripeService {
   constructor() {
     this.logger = new LoggingService(this.constructor.name);
+    this.firestoreService = new FirestoreService();
   }
 
   // Fetch Stripe keys from Firebase Remote Config.
@@ -91,8 +92,7 @@ class StripeService {
     const data = event.data.object;
 
     // Update the user's subscription in Firestore.
-    const firestoreService = new FirestoreService();
-    await firestoreService.updateUser(
+    await this.firestoreService.updateUser(
       data.metadata.firebase_user_id,
       {
         subscription: {
@@ -120,8 +120,6 @@ class StripeService {
   async updateCustomerSubscription(event) {
     this.logger.info("Updating customer subscription");
 
-    const firestoreService = new FirestoreService();
-
     const cancelAtPeriodEndBefore = event.data.previous_attributes.cancel_at_period_end;
     const cancelAtPeriodEndAfter = event.data.object.cancel_at_period_end;
 
@@ -141,7 +139,7 @@ class StripeService {
       const customer = await getCustomer(event.data.object.customer);
 
       // Update the user's subscription in Firestore.
-      await firestoreService.updateUser(
+      await this.firestoreService.updateUser(
         customer.metadata.firebase_user_id,
         {
           subscription: {
@@ -160,7 +158,7 @@ class StripeService {
       const customer = await getCustomer(event.data.object.customer);
 
       // Update the user's subscription in Firestore.
-      await firestoreService.updateUser(
+      await this.firestoreService.updateUser(
         customer.metadata.firebase_user_id,
         {
           subscription: {
@@ -181,7 +179,7 @@ class StripeService {
       const customer = await getCustomer(event.data.object.customer);
 
       // Update the user's subscription in Firestore.
-      await firestoreService.updateUser(
+      await this.firestoreService.updateUser(
         customer.metadata.firebase_user_id,
         {
           subscription: {
@@ -204,8 +202,7 @@ class StripeService {
     const customer = await getCustomer(data.customer);
 
     // Update the user's subscription status in Firebase.
-    const firestoreService = new FirestoreService();
-    await firestoreService.updateUser(
+    await this.firestoreService.updateUser(
       customer.metadata.firebase_user_id,
       {
         "subscription.status": "Free",
@@ -258,8 +255,7 @@ class StripeService {
     this.logger.info(event);
 
     // Save the Stripe event to Firestore.
-    const firestoreService = new FirestoreService();
-    await firestoreService.addStripeEvent(event);
+    await this.firestoreService.addStripeEvent(event);
 
     // Check which Stripe events can be handled by this webhoook.
     const supportedStripeEvents = Object.values(stripeEvents);
