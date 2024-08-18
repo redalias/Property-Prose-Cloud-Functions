@@ -10,6 +10,35 @@ const FirestoreService = require("./services/firestore-service");
 const StripeService = require("./services/stripe-service");
 const VertexAiService = require("./services/vertex-ai-service");
 
+exports.createStripeCheckoutSession = functions.https.onCall(
+  async (request, response) => {
+    const log = new LoggingService('MAIN');
+
+    try {
+      const session = await stripe.checkout.sessions.create({
+        ui_mode: 'embedded',
+        line_items: [
+          {
+            // Provide the exact Price ID (for example, pr_1234) of the product you want to sell
+            price: 'prod_QA4qaCkaDGo81g',
+            quantity: 1,
+          },
+        ],
+        mode: 'payment',
+        return_url: `https://app.copyspark.co?session_id=${CHECKOUT_SESSION_ID}`,
+      });
+
+      response.send({ clientSecret: session.client_secret });
+    } catch (error) {
+      log.error(error);
+
+      response
+        .status(500)
+        .send("Error creating payment link");
+    }
+  },
+);
+
 /*
   Creates a session of the Stripe Customer Portal.
   See https://docs.stripe.com/api/customer_portal/sessions/create.
@@ -35,6 +64,32 @@ exports.createStripeCustomerPortalSession = functions.https.onCall(
     }
   },
 );
+
+exports.createStripePaymentIntent = functions.https.onCall(
+  async (request, response) => {
+    const log = new LoggingService('MAIN');
+
+    try {
+      // Create a PaymentIntent with the order amount and currency.
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: 500,
+        currency: "nzd",
+      });
+
+      response.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    } catch (error) {
+      log.error(error);
+
+      response
+        .status(500)
+        .send("Error creating payment link");
+    }
+  },
+);
+
+
 
 exports.createStripePaymentLink = functions.https.onCall(
   async (request, response) => {
