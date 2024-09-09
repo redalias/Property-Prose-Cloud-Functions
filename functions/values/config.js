@@ -11,6 +11,9 @@ const config = {
   // Number of times to retry a failed AI model prompt before stopping altogether.
   llmRetryCount: 2,
 
+  // How long to wait until retrying a failed AI model prompt.
+  llmRetryDelayMilliseconds: 3000,
+
   // Firebase Remote Config Keys used specifically for Stripe.
   stripeRemoteConfigKeys: {
     // The text shown to the user after purchasing Copyspark Pro.

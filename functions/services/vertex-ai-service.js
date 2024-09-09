@@ -84,10 +84,14 @@ class VertexAiService {
 
     let retries = 0;
     const maxRetries = config.llmRetryCount;
+    const retryDelay = config.llmRetryDelayMilliseconds;
 
     while (retries <= maxRetries) {
       if (retries > 0) {
         this.log.warn(`Attempting retry ${retries} of ${maxRetries}...`);
+        this.log.info(`Waiting ${retryDelay} milliseconds before retrying...`);
+
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
       }
 
       try {
