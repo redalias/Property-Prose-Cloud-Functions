@@ -108,7 +108,7 @@ class StripeService {
 
     // Add the user's Firebase ID as metadata in their Stripe customer
     // profile.
-    await updateCustomer(
+    await this.updateCustomer(
       data.customer,
       {
         metadata: {
@@ -137,7 +137,7 @@ class StripeService {
       this.log.info("Cancelling customer subscription at end of billing period");
 
       // Fetch the customer from Stripe and get their Firebase user ID.
-      const customer = await getCustomer(event.data.object.customer);
+      const customer = await this.getCustomer(event.data.object.customer);
 
       // Update the user's subscription in Firestore.
       await this.firestoreService.updateUser(
@@ -156,7 +156,7 @@ class StripeService {
       this.log.info("Reactivating customer subscription");
 
       // Fetch the customer from Stripe and get their Firebase user ID.
-      const customer = await getCustomer(event.data.object.customer);
+      const customer = await this.getCustomer(event.data.object.customer);
 
       // Update the user's subscription in Firestore.
       await this.firestoreService.updateUser(
@@ -177,7 +177,7 @@ class StripeService {
       this.log.info("Renewing customer subscription for another billing period");
 
       // Fetch the customer from Stripe and get their Firebase user ID.
-      const customer = await getCustomer(event.data.object.customer);
+      const customer = await this.getCustomer(event.data.object.customer);
 
       // Update the user's subscription in Firestore.
       await this.firestoreService.updateUser(
@@ -200,7 +200,7 @@ class StripeService {
     const data = event.data.object;
 
     // Fetch the customer from Stripe and get their Firebase user ID.
-    const customer = await getCustomer(data.customer);
+    const customer = await this.getCustomer(data.customer);
 
     // Update the user's subscription status in Firebase.
     await this.firestoreService.updateUser(
@@ -222,7 +222,7 @@ class StripeService {
     const customer = await stripe.customers.retrieve(customerId);
 
     this.log.info('Customer:');
-    this.log.info(customer);
+    this.log.info(this.log.formatObject(customer));
 
     return customer;
   }
@@ -253,7 +253,7 @@ class StripeService {
     );
 
     this.log.info("Event:");
-    this.log.info(event);
+    this.log.info(this.log.formatObject(event));
 
     // Save the Stripe event to Firestore.
     await this.firestoreService.addStripeEvent(event);
@@ -267,18 +267,18 @@ class StripeService {
       switch (event.type) {
         case stripeEvents.checkoutSessionCompleted:
           // The customer upgraded from Free to Pro.
-          await upgradeCustomerSubscription(event);
+          await this.upgradeCustomerSubscription(event);
           break;
 
         case stripeEvents.customerSubscriptionUpdated:
           // The customer updated their subscription. For example, they renewed,
           // canceled, or reactivated it.
-          await updateCustomerSubscription(event);
+          await this.updateCustomerSubscription(event);
           break;
 
         case stripeEvents.customerSubscriptionDeleted:
           // The customer's pending subscription downgrade has taken effect.
-          await downgradeCustomerSubscription(event);
+          await this.downgradeCustomerSubscription(event);
           break;
       }
 
