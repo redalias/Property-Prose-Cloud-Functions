@@ -18,32 +18,38 @@ class LoggingService {
      * @param {object} obj The object to be formatted.
      * @param {number} depth (Optional) The current depth level during recursive calls.
      *  Defaults to 0.
+     * @param {Set} seen (Optional) Tracks objects to prevent circular references.
      * @returns {string} The formatted string representation of the object.
      */
-    formatObject(obj, depth = 0) {
+    formatObject(obj, depth = 0, seen = new Set()) {
         if (typeof obj === 'object' && obj !== null) {
-            if (depth > 2) { // Limit nesting depth to avoid excessive logs (adjust as needed)
+            if (depth > 2) {  // Limit nesting depth
                 return '[Object]';
             }
 
-            // Try-catch with more specific error handling
+            if (seen.has(obj)) {  // Circular reference detected
+                return '[Circular]';
+            }
+
+            // Mark this object as seen
+            seen.add(obj);
+
             try {
-                // Use replacer function to handle circular references
                 return JSON.stringify(obj, (key, value) => {
-                    if (typeof value === 'object' && value !== null && depth >= 2) {
-                        // If depth limit reached or circular reference detected, return a placeholder
-                        return '[Circular]';
+                    if (typeof value === 'object' && value !== null) {
+                        if (seen.has(value)) {  // Circular reference detected within object properties
+                            return '[Circular]';
+                        }
+                        return value;
                     }
-                    // Otherwise, return the value as usual
                     return value;
-                }, 2);
+                }, 2);  // Pretty-print with 2-space indentation
             } catch (error) {
-                // Log the error message instead of just '[Circular]'
                 console.error('Error formatting object:', error.message);
                 return '[Error]';
             }
         } else {
-            return obj;
+            return String(obj);  // Return primitives as-is
         }
     }
 
