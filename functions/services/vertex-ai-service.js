@@ -19,7 +19,10 @@ class VertexAiService {
     prompt = prompt.replace('${features}', features);
     prompt = prompt.replace('${contactDetails}', contactDetails);
 
-    const response = await this.sendPromptToGemini(prompt);
+    let jsonSchema = await this.firebaseRemoteConfigService.getParameter('json_schema_all_copy');
+    jsonSchema = JSON.parse(jsonSchema);
+
+    const response = await this.sendPromptToGemini(prompt, jsonSchema);
     return response;
   }
 
@@ -53,7 +56,11 @@ class VertexAiService {
       prompt = prompt.replace('${maxLength}', maxLength);
     }
 
-    const response = await this.sendPromptToGemini(prompt);
+    let jsonSchema = await this.firebaseRemoteConfigService.getParameter('json_schema_contextual_copy');
+    jsonSchema = JSON.parse(jsonSchema);
+
+
+    const response = await this.sendPromptToGemini(prompt, jsonSchema);
     return response;
   }
 
@@ -74,11 +81,14 @@ class VertexAiService {
       // Update the character length requirement in the prompt.
     }
 
-    const response = await this.sendPromptToGemini(prompt);
+    let jsonSchema = await this.firebaseRemoteConfigService.getParameter('json_schema_single_copy');
+    jsonSchema = JSON.parse(jsonSchema);
+
+    const response = await this.sendPromptToGemini(prompt, jsonSchema);
     return response;
   }
 
-  async sendPromptToGemini(prompt) {
+  async sendPromptToGemini(prompt, jsonSchema) {
     this.log.info('Sending prompt to Gemini:');
     this.log.info(prompt);
 
@@ -102,6 +112,10 @@ class VertexAiService {
 
         const generativeModel = vertexAI.getGenerativeModel({
           model: config.llmModel,
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: jsonSchema,
+          },
         });
 
         const resp = await generativeModel.generateContent(prompt);
