@@ -216,12 +216,14 @@ exports.generateAllCopy = functions.https.onCall(
       const address = request.data['address'];
       const features = request.data['features'];
       const contactDetails = request.data['contact_details'];
+      const userSubscriptionStatus = request.data['user_subscription_status'];
 
       const vertexAiService = new VertexAiService();
       const response = await vertexAiService.createPromptForAllCopy(
         address,
         features,
         contactDetails,
+        userSubscriptionStatus,
       );
 
       log.info(log.formatObject(response));
@@ -253,6 +255,7 @@ exports.generateContextualCopy = functions.https.onCall(
       const features = request.data['features'];
       const contactDetails = request.data['contact_details'];
       const maxLength = request.data['max_length'];
+      const userSubscriptionStatus = request.data['user_subscription_status'];
 
       const vertexAiService = new VertexAiService();
       const response = await vertexAiService.createPromptForContextualCopy(
@@ -263,7 +266,8 @@ exports.generateContextualCopy = functions.https.onCall(
         address,
         features,
         contactDetails,
-        maxLength
+        maxLength,
+        userSubscriptionStatus,
       );
 
       log.info(log.formatObject(response));
@@ -292,6 +296,7 @@ exports.generateSingleCopy = functions.https.onCall(
       const features = request.data['features'];
       const contactDetails = request.data['contact_details'];
       const maxLength = request.data['max_length'];
+      const userSubscriptionStatus = request.data['user_subscription_status'];
 
       const vertexAiService = new VertexAiService();
       const response = await vertexAiService.createPromptForSingleCopy(
@@ -300,6 +305,7 @@ exports.generateSingleCopy = functions.https.onCall(
         features,
         contactDetails,
         maxLength,
+        userSubscriptionStatus,
       );
 
       log.info(log.formatObject(response));

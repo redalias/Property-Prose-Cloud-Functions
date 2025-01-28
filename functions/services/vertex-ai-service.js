@@ -1,5 +1,7 @@
 const { VertexAI } = require('@google-cloud/vertexai');
 const config = require("../values/config");
+const firebaseRemoteConfigKeys = require("../values/firebase-remote-config-keys");
+const strings = require("../values/strings");
 
 const LoggingService = require("./logging-service");
 const FirebaseRemoteConfigService = require("./firebase-remote-config-service");
@@ -10,10 +12,19 @@ class VertexAiService {
     this.firebaseRemoteConfigService = new FirebaseRemoteConfigService();
   }
 
-  async createPromptForAllCopy(address, features, contactDetails) {
+  async createPromptForAllCopy(
+    address,
+    features,
+    contactDetails,
+    userSubscriptionStatus
+  ) {
     this.log.info('Creating prompt for all copy');
 
-    let prompt = await this.firebaseRemoteConfigService.getParameter('prompt_all_copy');
+    let firebaseRemoteConfigKey = userSubscriptionStatus === strings.subscriptionStatusFree
+      ? firebaseRemoteConfigKeys.prompt.allCopy.free
+      : firebaseRemoteConfigKeys.prompt.allCopy.pro;
+
+    let prompt = await this.firebaseRemoteConfigService.getParameter(firebaseRemoteConfigKey);
 
     prompt = prompt.replace('${address}', address);
     prompt = prompt.replace('${features}', features);
@@ -34,11 +45,16 @@ class VertexAiService {
     address,
     features,
     contactDetails,
-    maxLength
+    maxLength,
+    userSubscriptionStatus,
   ) {
     this.log.info('Creating prompt for contextual copy');
 
-    let prompt = await this.firebaseRemoteConfigService.getParameter('prompt_contextual_copy');
+    let firebaseRemoteConfigKey = userSubscriptionStatus === strings.subscriptionStatusFree
+      ? firebaseRemoteConfigKeys.prompt.contextualCopy.free
+      : firebaseRemoteConfigKeys.prompt.contextualCopy.pro;
+
+    let prompt = await this.firebaseRemoteConfigService.getParameter(firebaseRemoteConfigKey);
 
     prompt = prompt.replace('${copyElementType}', copyElementType);
     prompt = prompt.replace('${action}', action);
@@ -64,10 +80,21 @@ class VertexAiService {
     return response;
   }
 
-  async createPromptForSingleCopy(copyElementType, address, features, contactDetails, maxLength) {
+  async createPromptForSingleCopy(
+    copyElementType,
+    address,
+    features,
+    contactDetails,
+    maxLength,
+    userSubscriptionStatus
+  ) {
     this.log.info('Creating prompt for single copy');
 
-    let prompt = await this.firebaseRemoteConfigService.getParameter('prompt_single_copy');
+    let firebaseRemoteConfigKey = userSubscriptionStatus === strings.subscriptionStatusFree
+      ? firebaseRemoteConfigKeys.prompt.singleCopy.free
+      : firebaseRemoteConfigKeys.prompt.singleCopy.pro;
+
+    let prompt = await this.firebaseRemoteConfigService.getParameter(firebaseRemoteConfigKey);
 
     prompt = prompt.replace('${copyElementType}', copyElementType);
     prompt = prompt.replace('${address}', address);
