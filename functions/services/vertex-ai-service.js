@@ -30,7 +30,11 @@ class VertexAiService {
     prompt = prompt.replace('${features}', features);
     prompt = prompt.replace('${contactDetails}', contactDetails);
 
-    let jsonSchema = await this.firebaseRemoteConfigService.getParameter('json_schema_all_copy');
+    let firebaseRemoteConfigJsonSchema = userSubscriptionStatus === strings.subscriptionStatusFree
+      ? firebaseRemoteConfigKeys.jsonSchema.allCopy.free
+      : firebaseRemoteConfigKeys.jsonSchema.allCopy.pro;
+
+    let jsonSchema = await this.firebaseRemoteConfigService.getParameter(firebaseRemoteConfigJsonSchema);
     jsonSchema = JSON.parse(jsonSchema);
 
     const response = await this.sendPromptToGemini(prompt, jsonSchema);
@@ -72,8 +76,12 @@ class VertexAiService {
       prompt = prompt.replace('${maxLength}', maxLength);
     }
 
-    let jsonSchema = await this.firebaseRemoteConfigService.getParameter('json_schema_contextual_copy');
-    jsonSchema = JSON.parse(jsonSchema);
+    let firebaseRemoteConfigJsonSchema = userSubscriptionStatus === strings.subscriptionStatusFree
+      ? firebaseRemoteConfigKeys.jsonSchema.contextualCopy.free
+      : firebaseRemoteConfigKeys.jsonSchema.contextualCopy.pro;
+
+    let jsonSchema = await this.firebaseRemoteConfigService.getParameter(firebaseRemoteConfigJsonSchema);
+    jsonSchema = JSON.parse(jsonSchema); jsonSchema = JSON.parse(jsonSchema);
 
 
     const response = await this.sendPromptToGemini(prompt, jsonSchema);
@@ -108,7 +116,11 @@ class VertexAiService {
       // Update the character length requirement in the prompt.
     }
 
-    let jsonSchema = await this.firebaseRemoteConfigService.getParameter('json_schema_single_copy');
+    let firebaseRemoteConfigJsonSchema = userSubscriptionStatus === strings.subscriptionStatusFree
+      ? firebaseRemoteConfigKeys.jsonSchema.singleCopy.free
+      : firebaseRemoteConfigKeys.jsonSchema.singleCopy.pro;
+
+    let jsonSchema = await this.firebaseRemoteConfigService.getParameter(firebaseRemoteConfigJsonSchema);
     jsonSchema = JSON.parse(jsonSchema);
 
     const response = await this.sendPromptToGemini(prompt, jsonSchema);
