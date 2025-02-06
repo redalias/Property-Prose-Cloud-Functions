@@ -1,9 +1,6 @@
 const firebaseRemoteConfigKeys = {
   prompt: {
-    allCopy: {
-      free: "prompt_all_copy_free",
-      pro: "prompt_all_copy_pro",
-    },
+    allCopy: "prompt_all_copy",
     contextualCopy: {
       free: "prompt_contextual_copy_free",
       pro: "prompt_contextual_copy_pro",

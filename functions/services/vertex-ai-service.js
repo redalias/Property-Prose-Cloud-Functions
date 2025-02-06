@@ -20,16 +20,21 @@ class VertexAiService {
   ) {
     this.log.info('Creating prompt for all copy');
 
-    let firebaseRemoteConfigKey = userSubscriptionStatus === strings.subscriptionStatusFree
-      ? firebaseRemoteConfigKeys.prompt.allCopy.free
-      : firebaseRemoteConfigKeys.prompt.allCopy.pro;
+    // Fetch the prompt from Firebase Remote Config.    
+    let firebaseRemoteConfigKey = firebaseRemoteConfigKeys.prompt.allCopy;
+    let promptAllCopy = JSON.parse(await this.firebaseRemoteConfigService.getParameter(firebaseRemoteConfigKey));
 
-    let prompt = await this.firebaseRemoteConfigService.getParameter(firebaseRemoteConfigKey);
+    // Extract the correct version of the prompt, depending on the user's subscription status.
+    promptAllCopy = userSubscriptionStatus === strings.subscriptionStatusFree
+      ? promptAllCopy.free
+      : promptAllCopy.pro;
 
-    prompt = prompt.replace('${address}', address);
-    prompt = prompt.replace('${features}', features);
-    prompt = prompt.replace('${contactDetails}', contactDetails);
+    // Replace all placeholders in the promopt with the correct values.
+    promptAllCopy = promptAllCopy.replace('${address}', address);
+    promptAllCopy = promptAllCopy.replace('${features}', features);
+    promptAllCopy = promptAllCopy.replace('${contactDetails}', contactDetails);
 
+    // Fetching the JSON schema from from Firebase Remote Config, depending on the user's subscription status.
     let firebaseRemoteConfigJsonSchema = userSubscriptionStatus === strings.subscriptionStatusFree
       ? firebaseRemoteConfigKeys.jsonSchema.allCopy.free
       : firebaseRemoteConfigKeys.jsonSchema.allCopy.pro;
@@ -37,7 +42,7 @@ class VertexAiService {
     let jsonSchema = await this.firebaseRemoteConfigService.getParameter(firebaseRemoteConfigJsonSchema);
     jsonSchema = JSON.parse(jsonSchema);
 
-    const response = await this.sendPromptToGemini(prompt, jsonSchema);
+    const response = await this.sendPromptToGemini(promptAllCopy, jsonSchema);
     return response;
   }
 
