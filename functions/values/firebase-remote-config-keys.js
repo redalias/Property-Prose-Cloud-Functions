@@ -5,10 +5,7 @@ const firebaseRemoteConfigKeys = {
       free: "prompt_contextual_copy_free",
       pro: "prompt_contextual_copy_pro",
     },
-    singleCopy: {
-      free: "prompt_single_copy_free",
-      pro: "prompt_single_copy_pro",
-    }
+    singleCopy: "prompt_single_copy",
   },
 
   maximumFreeCopyGenerations: "maximum_free_copy_generations",
