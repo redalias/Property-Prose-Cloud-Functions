@@ -338,11 +338,12 @@ exports.proxyGoogleMapsPlacesAutocomplete = functions.https.onRequest(
       var apiKey = request.query['key'];
       var components = request.query['components'];
 
-      // Construct the Google Maps request.
-      var googleMapsRequestUrl = targetUrl + "&key=" + apiKey;
+      // Construct the request URL.
+      var googleMapsRequestUrl;
 
-      // TODO: uncomment below to use components, once the https://country.is location fetch is setup.
-      // var googleMapsRequestUrl = targetUrl + "&key=" + apiKey + "&components=" + components;
+      googleMapsRequestUrl = components
+        ? targetUrl + "&key=" + apiKey + "&components=" + components
+        : targetUrl + "&key=" + apiKey;
 
       log.info("Google Maps autocomplete request URL: " + googleMapsRequestUrl);
       log.info(googleMapsRequestUrl);
