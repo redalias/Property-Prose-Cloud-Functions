@@ -6,7 +6,7 @@ const config = {
   googleCloudProjectLocation: "us-central1",
 
   // The AI model used to generate the copy.
-  llmModel: "gemini-1.5-flash",
+  llmModel: "gemini-2.0-flash-001",
 
   // Number of times to retry a failed AI model prompt before stopping altogether.
   llmRetryCount: 2,
