@@ -321,6 +321,57 @@ exports.generateSingleCopy = functions.https.onCall(
   },
 );
 
+exports.fetchUserLocation = functions.https.onRequest(async (request, response) => {
+  const log = new LoggingService('MAIN');
+
+  try {
+    response.set('Access-Control-Allow-Origin', '*');
+    response.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    response.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    if (request.method === 'OPTIONS') {
+      response.status(204).send('');
+      return;
+    }
+
+    log.info("Fetching user's location");
+
+    const forwardedFor = request.header('x-forwarded-for');
+    const ipAddress = forwardedFor ? forwardedFor.split(',')[0].trim() : request.ip;
+    log.info("User's IP address: " + ipAddress);
+
+    // Handle the case where ipAddress is null
+    if (!ipAddress) {
+      log.error("IP address is null");
+      response.status(400).send({ error: "Could not determine IP address." });
+      return;
+    }
+
+    const apiResponse = await fetch(`https://api.country.is/${ipAddress}`);
+
+    // Check for API errors.
+    if (!apiResponse.ok) {
+      const errorData = await apiResponse.json();
+      const errorMessage = errorData.error || `Country lookup failed: ${apiResponse.status} ${apiResponse.statusText}`;
+      log.error(errorMessage);
+      response.status(apiResponse.status).send({ error: errorMessage });
+      return;
+    }
+
+    const apiData = await apiResponse.json();
+    const country = apiData.country;
+
+    log.info("User's country: " + country);
+
+    response.status(200).send(apiData);
+
+  } catch (error) {
+    log.error("Error in fetchUserLocation:", error);
+    response.status(500).send({ error: error.message });
+  }
+});
+
+
 
 exports.proxyGoogleMapsPlacesAutocomplete = functions.https.onRequest(
   async (request, response) => {
