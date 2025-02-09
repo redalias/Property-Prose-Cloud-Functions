@@ -8,7 +8,6 @@ const config = {
   // The AI model used to generate the copy.
   llmModel: "gemini-2.0-flash-001",
 
-
   // Number of times to retry a failed AI model prompt before stopping altogether.
   llmRetryCount: 2,
 
