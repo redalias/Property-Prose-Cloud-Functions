@@ -381,30 +381,49 @@ exports.proxyGoogleMapsPlacesAutocomplete = functions.https.onRequest(
       // Set CORS headers for the response.
       response.set('Access-Control-Allow-Origin', '*');
       response.set('Access-Control-Allow-Methods', 'GET, POST');
-      response.set('Access-Control-Allow-Headers', 'Content-Type');
+      response.set('Access-Control-Allow-Headers', 'Content-Type, X-Goog-Api-Key, X-Goog-FieldMask');
 
       // Fetch parameters from the request.
       var targetUrl = request.query['target_url'];
       var firebaseUserIdToken = request.query['firebase_user_id_token'];
-      var apiKey = request.query['key'];
+      var apiKey = request.header('X-Goog-Api-Key');
       var components = request.query['components'];
+      var input = request.body['input'];
 
       // Construct the request URL.
-      var googleMapsRequestUrl;
+      var googleMapsRequestUrl = `${targetUrl}?key=${apiKey}&input=${input}`;
+      var fields = '*';
 
-      googleMapsRequestUrl = components
-        ? targetUrl + "&key=" + apiKey + "&components=" + components
-        : targetUrl + "&key=" + apiKey;
+      if (components != null) {
+        googleMapsRequestUrl += "&components=" + components;
+      }
 
       log.info("Google Maps autocomplete request URL: " + googleMapsRequestUrl);
-      log.info(googleMapsRequestUrl);
+
+      // Construct the request header.
+      var googleMapsRequestHeader = {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': fields,
+      };
+
+      log.info('Request header: ' + JSON.stringify(googleMapsRequestHeader));
+
+      // Construct the request body.
+      var googleMapsRequestBody = {
+        'input': input,
+      };
 
       // Execute the authenticated request and return the data.
       const googleMapsResponse = await fetch(googleMapsRequestUrl, {
-        'Authorization': 'Bearer ' + firebaseUserIdToken
+        method: 'POST',
+        headers: googleMapsRequestHeader,
+        body: JSON.stringify(googleMapsRequestBody),
       });
 
       const googleMapsResponseData = await googleMapsResponse.json();
+
+      log.info('Google Maps response: ' + JSON.stringify(googleMapsResponseData));
 
       response
         .status(200)
