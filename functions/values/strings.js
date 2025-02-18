@@ -17,7 +17,7 @@ const strings = {
   instagramPost: 'Instagram Post',
   xPost: 'X Post',
   linkedInPost: 'LinkedIn Post',
-  videoTour: 'Video Tour',
+  videoScript: 'Video Script',
 };
 
 module.exports = strings;

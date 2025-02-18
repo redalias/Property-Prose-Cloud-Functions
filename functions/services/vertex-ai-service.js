@@ -143,8 +143,8 @@ class VertexAiService {
         promptSingleCopy = promptSingleCopyJson['social_media']['x'];
         break;
 
-      case strings.videoTour:
-        promptSingleCopy = promptSingleCopyJson['video_tour'];
+      case strings.videoScript:
+        promptSingleCopy = promptSingleCopyJson['video_script'];
         break;
     }
 
