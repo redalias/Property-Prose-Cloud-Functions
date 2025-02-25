@@ -59,37 +59,57 @@ class VertexAiService {
   ) {
     this.log.info('Creating prompt for contextual copy');
 
-    let firebaseRemoteConfigKey = userSubscriptionStatus === strings.subscriptionStatusFree
-      ? firebaseRemoteConfigKeys.prompt.contextualCopy.free
-      : firebaseRemoteConfigKeys.prompt.contextualCopy.pro;
+    // Fetch the prompt from Firebase Remote Config.    
+    let firebaseRemoteConfigKey = firebaseRemoteConfigKeys.prompt.contextualCopy;
+    let promptContextualCopyJson = JSON.parse(await this.firebaseRemoteConfigService.getParameter(firebaseRemoteConfigKey));
 
-    let prompt = await this.firebaseRemoteConfigService.getParameter(firebaseRemoteConfigKey);
+    // Extract the prompt for the given copy element type.
+    let promptContextualCopy;
 
-    prompt = prompt.replace('${copyElementType}', copyElementType);
-    prompt = prompt.replace('${action}', action);
-    prompt = prompt.replace('${existingCopy}', existingCopy);
-    prompt = prompt.replace('${existingCopyToReplace}', existingCopyToReplace);
-    prompt = prompt.replace('${address}', address);
-    prompt = prompt.replace('${features}', features);
-    prompt = prompt.replace('${contactDetails}', contactDetails);
+    switch (action.toLowerCase()) {
+      case strings.condense.toLowerCase():
+        promptContextualCopy = promptContextualCopyJson['condense'];
+        break;
+
+      case strings.expand.toLowerCase():
+        promptContextualCopy = promptContextualCopyJson['expand'];
+        break;
+
+      case strings.rewrite.toLowerCase():
+        promptContextualCopy = promptContextualCopyJson['rewrite'];
+        break;
+    }
+
+    // Extract the correct version of the prompt, depending on the user's subscription status.
+    promptContextualCopy = userSubscriptionStatus === strings.subscriptionStatusFree
+      ? promptContextualCopy.free
+      : promptContextualCopy.pro;
+
+    // Replace all placeholders in the prompt with the correct values.
+    promptContextualCopy = promptContextualCopy.replace('${copyElementType}', copyElementType);
+    promptContextualCopy = promptContextualCopy.replace('${existingCopy}', existingCopy);
+    promptContextualCopy = promptContextualCopy.replace('${existingCopyToReplace}', existingCopyToReplace);
+    promptContextualCopy = promptContextualCopy.replace('${address}', address);
+    promptContextualCopy = promptContextualCopy.replace('${features}', features);
+    promptContextualCopy = promptContextualCopy.replace('${contactDetails}', contactDetails);
 
     if (maxLength == null || maxLength == 0) {
       // Remove the character length requirement in the prompt.
-      prompt = prompt.replace('Make it a maximum of ${maxLength} characters long.', '');
+      promptContextualCopy = promptContextualCopy.replace('Make it a maximum of ${maxLength} characters long.', '');
     } else {
       // Update the character length requirement in the prompt.
-      prompt = prompt.replace('${maxLength}', maxLength);
+      promptContextualCopy = promptContextualCopy.replace('${maxLength}', maxLength);
     }
 
+    // Fetching the JSON schema from from Firebase Remote Config, depending on the user's subscription status.
     let firebaseRemoteConfigJsonSchema = userSubscriptionStatus === strings.subscriptionStatusFree
       ? firebaseRemoteConfigKeys.jsonSchema.contextualCopy.free
       : firebaseRemoteConfigKeys.jsonSchema.contextualCopy.pro;
 
     let jsonSchema = await this.firebaseRemoteConfigService.getParameter(firebaseRemoteConfigJsonSchema);
-    jsonSchema = JSON.parse(jsonSchema); jsonSchema = JSON.parse(jsonSchema);
+    jsonSchema = JSON.parse(jsonSchema);
 
-
-    const response = await this.sendPromptToGemini(prompt, jsonSchema);
+    const response = await this.sendPromptToGemini(promptContextualCopy, jsonSchema);
     return response;
   }
 

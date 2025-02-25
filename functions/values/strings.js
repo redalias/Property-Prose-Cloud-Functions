@@ -18,6 +18,10 @@ const strings = {
   xPost: 'X Post',
   linkedInPost: 'LinkedIn Post',
   videoScript: 'Video Script',
+
+  expand: 'Expand',
+  condense: 'Condense',
+  rewrite: 'Rewrite',
 };
 
 module.exports = strings;
