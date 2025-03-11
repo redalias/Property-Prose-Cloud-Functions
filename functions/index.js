@@ -94,8 +94,15 @@ exports.createStripePaymentLink = functions.https.onCall(
     const log = new LoggingService('MAIN');
 
     try {
+      const firestoreService = new FirestoreService();
+      let firebaseUserId = request.data['firebase_user_id'];
+      let plan = request.data['plan'];
+      let frequency = request.data['frequency'];
+
+      log.info("Creating Stripe payment link for user " + firebaseUserId + " and plan " + plan + " (" + frequency + ")");
+
       const stripeService = new StripeService();
-      const paymentLink = await stripeService.createPaymentLink(request);
+      const paymentLink = await stripeService.createPaymentLink(firebaseUserId, plan, frequency);
 
       log.info("Created payment link");
       log.info(paymentLink);

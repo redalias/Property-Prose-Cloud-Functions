@@ -19,8 +19,8 @@ const config = {
     // The text shown to the user after purchasing Copyspark Pro.
     paymentSuccessfulText: "stripe_payment_successful_text",
 
-    // The price ID of the Copyspark Pro plan.
-    priceId: "stripe_price_id",
+    // The unique IDs of the pricing plans.
+    priceIds: "stripe_price_ids",
 
     // The Remote Config group used to contain all Stripe keys.
     remoteConfigParameterName: "Stripe",

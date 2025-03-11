@@ -23,10 +23,10 @@ class StripeService {
           remoteConfigParameterName,
           config.stripeRemoteConfigKeys.paymentSuccessfulText,
         ),
-        priceId: await this.firebaseRemoteConfigService.getParameterFromGroup(
+        priceIds: JSON.parse(await this.firebaseRemoteConfigService.getParameterFromGroup(
           remoteConfigParameterName,
-          config.stripeRemoteConfigKeys.priceId,
-        ),
+          config.stripeRemoteConfigKeys.priceIds,
+        )),
         secretKey: await this.firebaseRemoteConfigService.getParameterFromGroup(
           remoteConfigParameterName,
           config.stripeRemoteConfigKeys.secretKey,
@@ -61,36 +61,65 @@ class StripeService {
     });
   }
 
-  async createPaymentLink(request) {
-    // Initialise Stripe.
-    const stripeConfig = await this.createRemoteConfigStrings();
-    const stripe = require("stripe")(stripeConfig.secretKey);
+  async createPaymentLink(firebaseUserId, plan, frequency) {
+    try {
+      // Initialise Stripe.
+      const stripeConfig = await this.createRemoteConfigStrings();
+      const stripe = require("stripe")(stripeConfig.secretKey);
 
-    // Call the Stripe API to create a new payment link.
-    return await stripe.paymentLinks.create({
-      allow_promotion_codes: true,
-      after_completion: {
-        hosted_confirmation: {
-          custom_message: stripeConfig.paymentSuccessfulText,
+      plan = plan.toLowerCase();
+      frequency = frequency.toLowerCase();
+
+      let planJson = stripeConfig.priceIds[plan][frequency][0];
+      if (!planJson || !planJson["price_id"]) {
+        this.log.error("Invalid plan or frequency. Plan JSON: " + JSON.stringify(planJson));
+        throw new Error("Invalid plan or frequency");
+      }
+      this.log.info("Found pricing plan JSON: " + JSON.stringify(planJson));
+
+      // Call the Stripe API to create a new payment link.
+      return await stripe.paymentLinks.create({
+        allow_promotion_codes: true,
+        after_completion: {
+          hosted_confirmation: {
+            custom_message: stripeConfig.paymentSuccessfulText,
+          },
+          type: "hosted_confirmation",
         },
-        type: "hosted_confirmation",
-      },
-      line_items: [
-        {
-          price: stripeConfig.priceId,
-          quantity: 1,
+        line_items: [
+          {
+            price: planJson["price_id"],
+            quantity: 1,
+          },
+        ],
+        metadata: {
+          firebase_user_id: firebaseUserId,
         },
-      ],
-      metadata: {
-        firebase_user_id: request.data.firebase_user_id,
-      },
-    });
+      });
+    } catch (error) {
+      this.log.error("Error creating payment link: ", error);
+      throw new Error("Failed to create payment link");
+    }
   }
 
   async upgradeCustomerSubscription(event) {
     this.log.info("Upgrading customer subscription");
 
     const data = event.data.object;
+
+    // Fetch the subscription details from Stripe.
+    const stripeConfig = await this.createRemoteConfigStrings();
+    const stripe = require("stripe")(stripeConfig.secretKey);
+    const subscription = await stripe.subscriptions.retrieve(data.subscription);
+
+    // Extract the frequency from the subscription.
+    const frequency = subscription.items.data[0].plan.interval;
+
+    this.log.info("data.id: " + data.id);
+    this.log.info("data.customer: " + data.customer);
+    this.log.info("data.client_reference_id: " + data.client_reference_id);
+    this.log.info("data.subscription: " + data.subscription);
+    this.log.info("Subscription frequency: " + frequency);
 
     // Update the user's subscription in Firestore.
     await this.firestoreService.updateUser(
@@ -102,6 +131,10 @@ class StripeService {
           status: "Pro",
           stripe_customer_id: data.customer,
           subscription_id: data.subscription,
+          frequency: frequency,
+          amount: subscription.items.data[0].plan.amount,
+          currency: subscription.items.data[0].plan.currency,
+          price_id: subscription.items.data[0].price.id,
         }
       },
     );
@@ -130,6 +163,14 @@ class StripeService {
     const currentPeriodEndBefore = event.data.previous_attributes.current_period_end;
     const currentPeriodEndAfter = event.data.object.current_period_end;
 
+    // Fetch the subscription details from Stripe.
+    const stripeConfig = await this.createRemoteConfigStrings();
+    const stripe = require("stripe")(stripeConfig.secretKey);
+    const subscription = await stripe.subscriptions.retrieve(event.data.object.id);
+
+    // Extract the frequency from the subscription.
+    const frequency = subscription.items.data[0].plan.interval;
+
     if (cancelAtPeriodEndBefore == false && cancelAtPeriodEndAfter == true) {
       // The customer has set to cancel their subscription at the end of
       // their current billing period. Update the user's subscription in
@@ -147,6 +188,18 @@ class StripeService {
             date_cancelled: firebaseAdmin.firestore.Timestamp.now(),
             status: "Pro (pending downgrade)",
             stripe_customer_id: event.data.object.customer,
+            subscription_id: event.data.object.id,
+            frequency: frequency,
+            current_period_start: subscription.current_period_start,
+            current_period_end: subscription.current_period_end,
+            plan_id: subscription.items.data[0].plan.id,
+            amount: subscription.items.data[0].plan.amount,
+            currency: subscription.items.data[0].plan.currency,
+            trial_start: subscription.trial_start,
+            trial_end: subscription.trial_end,
+            cancel_at_period_end: subscription.cancel_at_period_end,
+            created: subscription.created,
+            metadata: subscription.metadata,
           }
         },
       );
@@ -167,10 +220,20 @@ class StripeService {
             status: "Pro",
             stripe_customer_id: event.data.object.customer,
             subscription_id: event.data.object.id,
+            frequency: frequency,
+            current_period_start: subscription.current_period_start,
+            current_period_end: subscription.current_period_end,
+            plan_id: subscription.items.data[0].plan.id,
+            amount: subscription.items.data[0].plan.amount,
+            currency: subscription.items.data[0].plan.currency,
+            trial_start: subscription.trial_start,
+            trial_end: subscription.trial_end,
+            cancel_at_period_end: subscription.cancel_at_period_end,
+            created: subscription.created,
+            metadata: subscription.metadata,
           }
         },
       );
-
     } else if ((currentPeriodStartBefore != currentPeriodStartAfter) &&
       (currentPeriodEndBefore != currentPeriodEndAfter)) {
       // The customer has renewed their subscription for another billing period.
@@ -187,7 +250,19 @@ class StripeService {
             date_renewed: firebaseAdmin.firestore.Timestamp.now(),
             latest_invoice_id: event.data.object.id,
             status: "Pro",
+            stripe_customer_id: event.data.object.customer,
             subscription_id: event.data.object.subscription,
+            frequency: frequency,
+            current_period_start: subscription.current_period_start,
+            current_period_end: subscription.current_period_end,
+            plan_id: subscription.items.data[0].plan.id,
+            amount: subscription.items.data[0].plan.amount,
+            currency: subscription.items.data[0].plan.currency,
+            trial_start: subscription.trial_start,
+            trial_end: subscription.trial_end,
+            cancel_at_period_end: subscription.cancel_at_period_end,
+            created: subscription.created,
+            metadata: subscription.metadata,
           }
         },
       );
