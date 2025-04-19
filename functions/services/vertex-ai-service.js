@@ -1,6 +1,7 @@
 const { VertexAI } = require('@google-cloud/vertexai');
 const config = require("../values/config");
 const firebaseRemoteConfigKeys = require("../values/firebase-remote-config-keys");
+const firebaseRemoteConfigGroups = require("../values/firebase-remote-config-groups");
 const strings = require("../values/strings");
 
 const LoggingService = require("./logging-service");
@@ -194,16 +195,28 @@ class VertexAiService {
     this.log.info('Sending prompt to Gemini:');
     this.log.info(prompt);
 
+    // Fetch the LLM model ID from Firebase Remote Config.
+    let llmModelIdKey = firebaseRemoteConfigKeys.llm.model_id;
+    let llmModelId = await this.firebaseRemoteConfigService.getParameterFromGroup(firebaseRemoteConfigGroups.llm, llmModelIdKey);
+
+    // Fetch the maximum number of retries from Firebase Remote Config.
+    let maxRetryCountKey = firebaseRemoteConfigKeys.llm.retry_count;
+    let maxRetryCount = await this.firebaseRemoteConfigService.getParameterFromGroup(firebaseRemoteConfigGroups.llm, maxRetryCountKey);
+
+    // Fetch the retry delay from Firebase Remote Config.
+    let retryDelayMillisecondsKey = firebaseRemoteConfigKeys.llm.retry_delay;
+    let retryDelayMilliseconds = await this.firebaseRemoteConfigService.getParameterFromGroup(firebaseRemoteConfigGroups.llm, retryDelayMillisecondsKey);
+
+    // Call the Gemini API to generate content.
+    // Retry the request if it fails, up to the maximum number of retries.
     let retries = 0;
-    const maxRetries = config.llmRetryCount;
-    const retryDelay = config.llmRetryDelayMilliseconds;
 
-    while (retries <= maxRetries) {
+    while (retries <= maxRetryCount) {
       if (retries > 0) {
-        this.log.warn(`Attempting retry ${retries} of ${maxRetries}...`);
-        this.log.info(`Waiting ${retryDelay} milliseconds before retrying...`);
+        this.log.warn(`Attempting retry ${retries} of ${maxRetryCount}...`);
+        this.log.info(`Waiting ${retryDelayMilliseconds} milliseconds before retrying...`);
 
-        await new Promise(resolve => setTimeout(resolve, retryDelay));
+        await new Promise(resolve => setTimeout(resolve, retryDelayMilliseconds));
       }
 
       try {
@@ -213,7 +226,7 @@ class VertexAiService {
         });
 
         const generativeModel = vertexAI.getGenerativeModel({
-          model: config.llmModel,
+          model: llmModelId,
           generationConfig: {
             responseMimeType: "application/json",
             responseSchema: jsonSchema,

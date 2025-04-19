@@ -5,15 +5,6 @@ const config = {
   // The geographic location of the project in Google Cloud.
   googleCloudProjectLocation: "us-central1",
 
-  // The AI model used to generate the copy.
-  llmModel: "gemini-2.5-flash-preview-04-17",
-
-  // Number of times to retry a failed AI model prompt before stopping altogether.
-  llmRetryCount: 2,
-
-  // How long to wait until retrying a failed AI model prompt.
-  llmRetryDelayMilliseconds: 3000,
-
   // Firebase Remote Config Keys used specifically for Stripe.
   stripeRemoteConfigKeys: {
     // The text shown to the user after purchasing Copyspark Pro.

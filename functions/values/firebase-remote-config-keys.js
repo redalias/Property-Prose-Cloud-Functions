@@ -5,6 +5,12 @@ const firebaseRemoteConfigKeys = {
     singleCopy: "prompt_single_copy",
   },
 
+  llm: {
+    model_id: "llm_model_id",
+    retry_count: "llm_max_retry_count",
+    retry_delay: "llm_retry_delay_milliseconds",
+  },
+
   maximumFreeCopyGenerations: "maximum_free_copy_generations",
 
   jsonSchema: {
