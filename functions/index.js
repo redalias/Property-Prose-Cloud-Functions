@@ -222,6 +222,7 @@ exports.generateAllCopy = functions.https.onCall(
       const features = request.data['features'];
       const contactDetails = request.data['contact_details'];
       const userSubscriptionStatus = request.data['user_subscription_status'];
+      const writingStyle = request.data['writing_style'];
 
       const vertexAiService = new VertexAiService();
       const response = await vertexAiService.createPromptForAllCopy(
@@ -229,6 +230,7 @@ exports.generateAllCopy = functions.https.onCall(
         features,
         contactDetails,
         userSubscriptionStatus,
+        writingStyle,
       );
 
       log.info(log.formatObject(response));
@@ -261,6 +263,7 @@ exports.generateContextualCopy = functions.https.onCall(
       const contactDetails = request.data['contact_details'];
       const maxLength = request.data['max_length'];
       const userSubscriptionStatus = request.data['user_subscription_status'];
+      const writingStyle = request.data['writing_style'];
 
       const vertexAiService = new VertexAiService();
       const response = await vertexAiService.createPromptForContextualCopy(
@@ -273,6 +276,7 @@ exports.generateContextualCopy = functions.https.onCall(
         contactDetails,
         maxLength,
         userSubscriptionStatus,
+        writingStyle,
       );
 
       log.info(log.formatObject(response));
@@ -302,6 +306,7 @@ exports.generateSingleCopy = functions.https.onCall(
       const contactDetails = request.data['contact_details'];
       const maxLength = request.data['max_length'];
       const userSubscriptionStatus = request.data['user_subscription_status'];
+      const writingStyle = request.data['writing_style'];
 
       const vertexAiService = new VertexAiService();
       const response = await vertexAiService.createPromptForSingleCopy(
@@ -311,6 +316,7 @@ exports.generateSingleCopy = functions.https.onCall(
         contactDetails,
         maxLength,
         userSubscriptionStatus,
+        writingStyle,
       );
 
       log.info(log.formatObject(response));

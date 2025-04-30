@@ -3,6 +3,7 @@ const firebaseRemoteConfigKeys = {
     allCopy: "prompt_all_copy",
     contextualCopy: "prompt_contextual_copy",
     singleCopy: "prompt_single_copy",
+    writingStyle: "prompt_writing_style",
   },
 
   llm: {

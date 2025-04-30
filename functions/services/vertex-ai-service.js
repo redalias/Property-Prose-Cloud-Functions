@@ -17,7 +17,8 @@ class VertexAiService {
     address,
     features,
     contactDetails,
-    userSubscriptionStatus
+    userSubscriptionStatus,
+    writingStyle,
   ) {
     this.log.info('Creating prompt for all copy');
 
@@ -43,6 +44,10 @@ class VertexAiService {
     let jsonSchema = await this.firebaseRemoteConfigService.getParameter(firebaseRemoteConfigJsonSchema);
     jsonSchema = JSON.parse(jsonSchema);
 
+    // Add the writing style to the prompt.
+    promptAllCopy = await this.addWritingStyleToPrompt(promptAllCopy, writingStyle);
+    this.log.info("=== promptAllCopy: " + promptAllCopy);
+
     const response = await this.sendPromptToGemini(promptAllCopy, jsonSchema);
     return response;
   }
@@ -57,6 +62,7 @@ class VertexAiService {
     contactDetails,
     maxLength,
     userSubscriptionStatus,
+    writingStyle,
   ) {
     this.log.info('Creating prompt for contextual copy');
 
@@ -110,6 +116,9 @@ class VertexAiService {
     let jsonSchema = await this.firebaseRemoteConfigService.getParameter(firebaseRemoteConfigJsonSchema);
     jsonSchema = JSON.parse(jsonSchema);
 
+    // Add the writing style to the prompt.
+    promptContextualCopy = await this.addWritingStyleToPrompt(promptContextualCopy, writingStyle);
+
     const response = await this.sendPromptToGemini(promptContextualCopy, jsonSchema);
     return response;
   }
@@ -120,7 +129,8 @@ class VertexAiService {
     features,
     contactDetails,
     maxLength,
-    userSubscriptionStatus
+    userSubscriptionStatus,
+    writingStyle,
   ) {
     this.log.info('Creating prompt for single copy');
 
@@ -187,6 +197,9 @@ class VertexAiService {
     let jsonSchema = await this.firebaseRemoteConfigService.getParameter(firebaseRemoteConfigJsonSchema);
     jsonSchema = JSON.parse(jsonSchema);
 
+    // Add the writing style to the prompt.
+    promptSingleCopy = await this.addWritingStyleToPrompt(promptSingleCopy, writingStyle);
+
     const response = await this.sendPromptToGemini(promptSingleCopy, jsonSchema);
     return response;
   }
@@ -249,6 +262,28 @@ class VertexAiService {
 
         retries++;
       }
+    }
+  }
+
+  /*  Adds the writing style to the prompt if it is provided.
+   *  If the writing style is not provided, the original prompt is returned.
+   * 
+   *  @param {string} prompt The prompt to which the writing style should be added.
+   *  @param {string} writingStyle The writing style to be added to the prompt.
+   *  @returns {string} The prompt with the writing style added.
+   */
+  async addWritingStyleToPrompt(prompt, writingStyle) {
+    if (writingStyle != null && writingStyle.length > 0) {
+      this.log.info('Adding writing style to the prompt');
+
+      let firebaseRemoteConfigKey = firebaseRemoteConfigKeys.prompt.writingStyle;
+      let promptWritingStyle = await this.firebaseRemoteConfigService.getParameter(firebaseRemoteConfigKey);
+      prompt = prompt + '\n' + promptWritingStyle.replace('%writingStyle', writingStyle);
+
+      return prompt;
+    } else {
+      this.log.info('No writing style provided');
+      return prompt;
     }
   }
 }
